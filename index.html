@@ -39,7 +39,7 @@ header.barra,.ventana{background:rgba(22,28,58,.62);backdrop-filter:blur(14px);-
 @media (prefers-reduced-motion:reduce){.flota,.flota:hover{transition:none;transform:none}}
 
 header.barra{display:flex;align-items:center;gap:16px;padding:14px 20px;position:sticky;top:14px;z-index:5;margin-bottom:26px}
-.marca{font-family:Bricolage,sans-serif;font-size:22px;letter-spacing:-.02em}
+.marca{font-family:Bricolage,sans-serif;font-size:22px;letter-spacing:-.02em;white-space:nowrap}
 .marca b{color:var(--naranja)}
 .etiqueta{font-size:12px;color:var(--suave);border:1px solid var(--borde);padding:4px 10px;border-radius:99px}
 .barra .hueco{flex:1}
@@ -118,64 +118,165 @@ textarea{min-height:70px;resize:vertical}
 .error{color:var(--rojo);font-size:13px;margin-top:10px;min-height:18px}
 .pie{color:var(--tenue);font-size:12px;text-align:center;margin-top:30px}
 
-@media (max-width:1000px){.kpis{grid-template-columns:repeat(2,1fr)}.rejilla,.tres{grid-template-columns:1fr}}
+/* ---- menú lateral ---- */
+.app{display:grid;grid-template-columns:250px minmax(0,1fr);gap:4px;max-width:1560px;margin:0 auto}
+.menu{position:sticky;top:14px;margin:14px 0 14px 14px;height:calc(100vh - 28px);padding:22px 14px;display:flex;flex-direction:column;gap:6px;
+  background:rgba(22,28,58,.62);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.menu .marca{padding:0 10px}
+.menu-sub{align-self:flex-start;margin:6px 10px 18px}
+.menu nav{display:flex;flex-direction:column;gap:4px}
+.menu nav a{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:14px;color:var(--suave);text-decoration:none;
+  font-weight:600;font-size:14px;border:1px solid transparent;transition:background .2s,color .2s}
+.menu nav a:hover{background:rgba(255,255,255,.07);color:var(--texto)}
+.menu nav a.activo{background:linear-gradient(135deg,rgba(255,106,43,.28),rgba(255,106,43,.12));border-color:rgba(255,106,43,.45);color:#fff}
+.menu nav a:focus-visible{outline:2px solid var(--naranja);outline-offset:2px}
+.menu svg{width:19px;height:19px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.menu-pie{margin-top:auto;font-size:12px;color:var(--tenue);padding:0 10px;line-height:1.4}
+h1#titulo{font-family:Bricolage,sans-serif;font-size:22px;letter-spacing:-.02em}
+.ver-mas{margin-left:auto;font:600 12px Instrument,sans-serif;color:var(--naranja);text-decoration:none}
+.dos-iguales{grid-template-columns:1fr 1fr}
+.lista.larga{max-height:none}
+.vista[hidden]{display:none}
+main.envoltura{margin:0;width:100%;min-width:0;max-width:none}
+
+/* ---- hoja de cálculo (como el tracker del curso) ---- */
+.hoja-caja{padding:18px 18px 0;overflow:hidden}
+.hoja-barra{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.hoja-barra h2{margin:0}
+.hoja-barra .hueco{flex:1}
+.hoja-barra input{width:280px;max-width:100%;padding:8px 12px;border-radius:99px}
+.hoja-scroll{overflow:auto;max-height:calc(100vh - 290px);min-height:320px;border:1px solid rgba(255,255,255,.12);border-radius:12px}
+table.hoja{border-collapse:separate;border-spacing:0;font-size:12.5px;width:max-content;min-width:100%}
+.hoja th,.hoja td{border-right:1px solid rgba(255,255,255,.08);border-bottom:1px solid rgba(255,255,255,.08);padding:7px 10px;white-space:nowrap;
+  max-width:300px;overflow:hidden;text-overflow:ellipsis;vertical-align:middle}
+.hoja thead th{position:sticky;z-index:2;color:var(--texto);text-align:center}
+.hoja thead tr.letras th{top:0;background:#1a2147;color:var(--tenue);font-weight:400;font-size:11px;padding:4px}
+.hoja thead tr.cabecera th{top:24px;font-weight:700;font-size:11.5px;letter-spacing:.02em;text-transform:uppercase;padding:9px 10px}
+.hoja .num{position:sticky;left:0;z-index:1;background:#1a2147;color:var(--tenue);text-align:center;font-size:11px;min-width:42px;padding:7px 4px}
+.hoja thead .num{z-index:3}
+.hoja td.lead{position:sticky;left:42px;z-index:1;font-weight:600}
+.hoja tbody tr:hover td{filter:brightness(1.25)}
+/* colores de columna: amarillo (seguimiento), naranja (retargeting), verde (booked), rojo (not interested), gris (extra) */
+.c-am{background:rgba(255,213,102,.10)} th.c-am{background:#4a432a}
+.c-na{background:rgba(255,141,52,.16)}  th.c-na{background:#6b3c1d}
+.c-ve{background:rgba(76,222,128,.14)}  th.c-ve{background:#215a35}
+.c-ro{background:rgba(255,92,92,.15)}   th.c-ro{background:#6a2629}
+.c-gr{background:rgba(255,255,255,.035)} th.c-gr{background:#2a3150}
+td.c-am.lead{background:#272a37}
+.hoja .marca-ok{color:#8ef0b8;font-weight:600}
+.hoja .marca-no{color:#ffb0b0}
+.pestanas{display:flex;gap:2px;overflow-x:auto;padding:8px 0 10px;margin-top:2px}
+.pestanas button{font:600 12px Instrument,sans-serif;letter-spacing:.03em;color:var(--suave);background:transparent;border:0;border-radius:8px 8px 0 0;
+  padding:8px 14px;cursor:pointer;white-space:nowrap;border-top:2px solid transparent}
+.pestanas button:hover{color:var(--texto);background:rgba(255,255,255,.05)}
+.pestanas button.activo{color:#fff;background:rgba(255,255,255,.08);border-top-color:var(--naranja)}
+.pestanas button small{color:var(--tenue);font-weight:400;margin-left:4px}
+
+@media (max-width:1000px){.kpis{grid-template-columns:repeat(2,1fr)}.rejilla,.tres,.dos-iguales{grid-template-columns:1fr}}
+@media (max-width:860px){
+  .app{grid-template-columns:1fr}
+  .menu{position:sticky;top:0;z-index:8;height:auto;margin:0;border-radius:0 0 18px 18px;padding:10px 12px;flex-direction:row;align-items:center;gap:8px;overflow-x:auto}
+  .menu-sub,.menu-pie{display:none}
+  .menu nav{flex-direction:row;gap:4px}
+  .menu nav a{padding:8px 10px}
+  .menu nav a span{display:none}
+  .menu nav a.activo span{display:inline}
+  header.barra{position:static}
+  .hoja-scroll{max-height:70vh}
+}
 @media (max-width:560px){.envoltura{padding:16px 16px 48px}.kpi .v{font-size:32px}.etiqueta{display:none}
-  .clientes{grid-template-columns:1fr}.dos{grid-template-columns:1fr}header.barra{top:8px}}
+  .clientes{grid-template-columns:1fr}.dos{grid-template-columns:1fr}header.barra{top:8px}.hoja-barra input{width:100%}}
 </style>
 </head>
 <body>
 <div class="cielo" aria-hidden="true"></div>
 
-<div class="envoltura">
-  <header class="barra vidrio">
+<div class="app">
+  <aside class="menu vidrio">
     <div class="marca">hey <b>nora</b></div>
-    <span class="etiqueta">Panel · concesionarios</span>
-    <div class="hueco"></div>
-    <span class="etiqueta" id="act">—</span>
-    <button class="boton" id="recargar" title="Recargar">↻</button>
-    <button class="boton" id="salir">Salir</button>
-  </header>
+    <span class="etiqueta menu-sub">Panel · concesionarios</span>
+    <nav aria-label="Secciones del panel">
+      <a href="#inicio" data-v="inicio"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span>Inicio</span></a>
+      <a href="#hoja" data-v="hoja"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M3 14h18M9 4v16M15 4v16"/></svg><span>Hoja de seguimiento</span></a>
+      <a href="#clientes" data-v="clientes"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5M16 4.5a3.5 3.5 0 0 1 0 7M18.5 14.8c1.6.8 2.6 2.5 3 5.2"/></svg><span>Clientes</span></a>
+      <a href="#llamadas" data-v="llamadas"><svg viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A17 17 0 0 1 4 5a1 1 0 0 1 1-1z"/></svg><span>Llamadas</span></a>
+      <a href="#funciona" data-v="funciona"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>Qué funciona</span></a>
+    </nav>
+    <p class="menu-pie">Lo rellena el Mac mini cada noche a las 00:00.</p>
+  </aside>
 
-  <section class="kpis" id="kpis"></section>
+  <main class="envoltura">
+    <header class="barra vidrio">
+      <h1 id="titulo">Inicio</h1>
+      <div class="hueco"></div>
+      <span class="etiqueta" id="act">—</span>
+      <button class="boton" id="recargar" title="Recargar" aria-label="Recargar">↻</button>
+      <button class="boton" id="salir">Salir</button>
+    </header>
 
-  <section class="rejilla">
-    <div class="vidrio caja">
-      <h2>Últimos 14 días <small>mensajes del 642 y respuestas reales</small></h2>
-      <svg class="grafica" id="grafica" role="img" aria-label="Enviados y respuestas por día"></svg>
-      <div class="leyenda"><span><i style="background:rgba(255,255,255,.22)"></i>Enviados</span><span><i style="background:var(--naranja)"></i>Respuestas reales</span><span><i style="background:var(--gris)"></i>Automáticas</span></div>
-    </div>
-    <div class="vidrio caja">
-      <h2>🔥 Por contestar <small>han respondido y nadie les ha escrito</small></h2>
-      <div class="lista" id="calientes"></div>
-    </div>
-  </section>
+    <!-- INICIO -->
+    <section class="vista" data-vista="inicio">
+      <div class="kpis" id="kpis"></div>
+      <div class="rejilla">
+        <div class="vidrio caja">
+          <h2>Últimos 14 días <small>mensajes del 642 y respuestas reales</small></h2>
+          <svg class="grafica" id="grafica" role="img" aria-label="Enviados y respuestas por día"></svg>
+          <div class="leyenda"><span><i style="background:rgba(255,255,255,.22)"></i>Enviados</span><span><i style="background:var(--naranja)"></i>Respuestas reales</span><span><i style="background:var(--gris)"></i>Automáticas</span></div>
+        </div>
+        <div class="vidrio caja">
+          <h2>🔥 Por contestar <small>han respondido y nadie les ha escrito</small></h2>
+          <div class="lista" id="calientes"></div>
+        </div>
+      </div>
+      <div class="rejilla dos-iguales">
+        <div class="vidrio caja">
+          <h2>📞 Próximas llamadas <a class="ver-mas" href="#llamadas">Ver todas →</a></h2>
+          <div class="lista" id="llamadas-inicio"></div>
+        </div>
+        <div class="vidrio caja">
+          <h2>Clientes <a class="ver-mas" href="#clientes">Ver fichas →</a></h2>
+          <div class="lista" id="clientes-inicio"></div>
+        </div>
+      </div>
+    </section>
 
-  <h2 style="margin-top:8px">Clientes <small>lo que tenemos con cada uno</small></h2>
-  <section class="clientes" id="clientes"></section>
+    <!-- HOJA -->
+    <section class="vista" data-vista="hoja" hidden>
+      <div class="vidrio caja hoja-caja">
+        <div class="hoja-barra">
+          <h2>Tracker métricas WhatsApp <small id="hoja-sub"></small></h2>
+          <div class="hueco"></div>
+          <input id="buscar" type="search" placeholder="Buscar concesionario, ciudad o teléfono" aria-label="Buscar en la hoja">
+          <button class="boton" id="csv">Descargar CSV</button>
+        </div>
+        <div class="hoja-scroll"><table class="hoja" id="hoja"></table></div>
+        <div class="pestanas" id="pestanas" role="tablist" aria-label="Meses"></div>
+      </div>
+      <p class="pie">💬 = contestó en ese toque · 🤖 = solo respuesta automática (no cuenta). No se mide si leen el mensaje ni si ven el vídeo: WhatsApp no lo dice.</p>
+    </section>
 
-  <section class="tres">
-    <div class="vidrio caja">
-      <h2>📞 Llamadas</h2>
-      <div class="lista" id="llamadas"></div>
-    </div>
-    <div class="vidrio caja">
-      <h2>Qué mensaje funciona</h2>
-      <div id="plantillas"></div>
-    </div>
-    <div class="vidrio caja">
-      <h2>Qué cumplido funciona</h2>
-      <div id="cumplidos"></div>
-    </div>
-  </section>
+    <!-- CLIENTES -->
+    <section class="vista" data-vista="clientes" hidden>
+      <div class="clientes" id="clientes"></div>
+    </section>
 
-  <section class="vidrio caja">
-    <h2>Tracker del frío <small id="trk-sub"></small>
-      <div class="filtros" id="filtros"></div>
-    </h2>
-    <div class="tabla-scroll"><table id="tracker"></table></div>
-  </section>
+    <!-- LLAMADAS -->
+    <section class="vista" data-vista="llamadas" hidden>
+      <div class="vidrio caja">
+        <h2>📞 Llamadas y reuniones <small>leads en «llamada agendada» y reuniones del calendario</small></h2>
+        <div class="lista larga" id="llamadas"></div>
+      </div>
+    </section>
 
-  <p class="pie">Lo rellena el Mac mini cada noche a las 00:00. No se mide si leen el mensaje ni si ven el vídeo: WhatsApp no lo dice.</p>
+    <!-- QUÉ FUNCIONA -->
+    <section class="vista" data-vista="funciona" hidden>
+      <div class="tres">
+        <div class="vidrio caja"><h2>Qué mensaje funciona</h2><div id="plantillas"></div></div>
+        <div class="vidrio caja"><h2>Qué cumplido funciona</h2><div id="cumplidos"></div></div>
+        <div class="vidrio caja"><h2>En qué toque contestan</h2><div id="toques"></div></div>
+      </div>
+    </section>
+  </main>
 </div>
 
 <!-- login -->
@@ -311,7 +412,8 @@ async function cargar() {
       llamadas: ls.filter((l) => l.stage === "llamada_agendada")
         .map((l) => ({empresa: l.company_name, cuando: l.next_followup_at, ultima: arriba(l).slice(0, 160)})),
       reuniones: (reus.data || []).filter((m) => (m.lead_id && ids.has(m.lead_id)) || (!m.lead_id && /conce|motor|auto|coche|moto|nora/i.test(m.titulo || ""))),
-      ultimos: [...filas].sort((a, b) => (b.actualizado || b.fecha_inicial || "").localeCompare(a.actualizado || a.fecha_inicial || "")).slice(0, 80),
+      filas,
+      contestaEn: filas.filter((r) => REALES.has(r.tipo_respuesta)).reduce((o, r) => (o[r.contesto_en || "?"] = (o[r.contesto_en || "?"] || 0) + 1, o), {}),
     };
     CLIENTES = cli.clientes || [];
     pintar();
@@ -333,9 +435,14 @@ function pintar() {
   const ll = [...(DATOS.llamadas || []).map((l) => `<div class="item"><b>${esc(l.empresa)}</b><p>${l.cuando ? fecha(l.cuando) + " · " : ""}${esc(l.ultima)}</p></div>`),
               ...(DATOS.reuniones || []).map((m) => `<div class="item"><b>${esc(m.titulo)}</b><p>${fecha(m.fecha)} ${esc((m.hora_inicio || "").slice(0,5))} · ${esc(m.tipo || "")}</p></div>`)];
   $("#llamadas").innerHTML = ll.join("") || `<div class="vacio">Sin llamadas agendadas.</div>`;
+  $("#llamadas-inicio").innerHTML = ll.slice(0, 4).join("") || `<div class="vacio">Sin llamadas agendadas.</div>`;
   $("#plantillas").innerHTML = tablaGrupos([...(DATOS.porVariante || []), ...(DATOS.porPlantilla || [])]);
   $("#cumplidos").innerHTML = tablaGrupos(DATOS.porCumplido || []);
-  clientes(); tracker();
+  const ce = Object.entries(DATOS.contestaEn || {}), tot = ce.reduce((a, [, v]) => a + v, 0);
+  $("#toques").innerHTML = ce.length ? `<table><tr><th>Toque</th><th class="n">Respuestas</th></tr>` + ce.sort().map(([k, v]) =>
+    `<tr><td>${esc(k)}<div class="barrita"><i style="width:${(100 * v / tot).toFixed(0)}%"></i></div></td><td class="n">${v}</td></tr>`).join("") +
+    `</table><p class="vacio" style="font-size:12px">«inicial» = al primer mensaje; F1, F2… = al seguimiento.</p>` : `<div class="vacio">Sin respuestas aún.</div>`;
+  clientes(); hoja();
 }
 
 function tablaGrupos(gs) {
@@ -375,6 +482,8 @@ function clientes() {
     </article>`).join("") + `<button class="vidrio nuevo" id="nuevo-cliente">+ Añadir cliente</button>`;
   document.querySelectorAll(".editar").forEach((b) => b.onclick = () => abrir(+b.dataset.i));
   $("#nuevo-cliente").onclick = () => abrir(-1);
+  $("#clientes-inicio").innerHTML = CLIENTES.map((c) => `<div class="item"><b>${esc(c.nombre)}</b> <span class="chip on">${esc(c.estado || "activo")}</span>
+    <p>${esc([c.tipo, c.ciudad].filter(Boolean).join(" · "))}${c.pendiente ? "<br>Pendiente: " + esc(c.pendiente) : ""}</p></div>`).join("") || `<div class="vacio">Aún no hay clientes.</div>`;
 }
 
 const CAMPOS = ["nombre", "estado", "razon", "tipo", "contacto", "telefono", "ciudad", "alta", "cuota", "resultado", "pendiente", "notas"];
@@ -409,21 +518,77 @@ $("#c-cancelar").onclick = () => $("#modal").hidden = true;
 $("#modal").onclick = (e) => { if (e.target.id === "modal") $("#modal").hidden = true; };
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") $("#modal").hidden = true; });
 
-const ESTADOS = {"llamada": "e-llamada", "respondió": "e-respondio", "descartado": "e-descartado", "solo automática": "e-auto", "solo gracias": "e-gracias"};
-function tracker() {
-  const filas = DATOS.ultimos || [];
-  const cuenta = {}; filas.forEach((r) => cuenta[r.estado || "—"] = (cuenta[r.estado || "—"] || 0) + 1);
-  $("#filtros").innerHTML = ["todos", ...Object.keys(cuenta)].map((e) => `<button class="boton ${e === FILTRO ? "activo" : ""}" data-e="${esc(e)}">${esc(e)}${e === "todos" ? "" : " · " + cuenta[e]}</button>`).join("");
-  document.querySelectorAll("#filtros .boton").forEach((b) => b.onclick = () => { FILTRO = b.dataset.e; tracker(); });
-  $("#trk-sub").textContent = `los ${filas.length} más recientes`;
-  const ver = filas.filter((r) => FILTRO === "todos" || (r.estado || "—") === FILTRO);
-  $("#tracker").innerHTML = `<tr><th>Concesionario</th><th>Ciudad</th><th>Contacto</th><th>Mensaje</th><th>F UP</th><th>Respuesta</th><th>Estado</th></tr>` +
-    ver.map((r) => `<tr><td><b>${esc(r.negocio)}</b>${r.nombre ? `<br><span style="color:var(--tenue)">${esc(r.nombre)}</span>` : ""}</td>
-      <td>${esc(r.ciudad)}</td><td>${fecha(r.fecha_inicial)}</td><td>${esc([r.plantilla, r.variante].filter(Boolean).join(" · "))}</td>
-      <td>${["fup1", "fup2", "fup3"].filter((f) => r[f]).length || "—"}</td>
-      <td style="max-width:340px">${esc(r.texto_respuesta || (r.texto_automatica ? "🤖 " + r.texto_automatica : ""))}${r.contesto_en ? `<br><span style="color:var(--tenue)">en ${esc(r.contesto_en)}</span>` : ""}</td>
-      <td><span class="estado ${ESTADOS[r.estado] || ""}">${esc(r.estado || "—")}</span></td></tr>`).join("");
+// ---- Hoja de cálculo: las columnas del tracker del curso (+ respuesta y automática al final)
+const MESES = ["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO","JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"];
+let MES = null;
+const corta = (s) => s ? String(s).slice(8, 10) + "/" + String(s).slice(5, 7) : "";
+const tel = (t) => String(t || "").replace(/^34(?=\d{9}$)/, "").replace(/(\d{3})(\d{3})(\d{3})$/, "$1 $2 $3");
+const toque = (r, k) => r.contesto_en === k ? " 💬" : "";
+const COLS = [
+  ["LEAD (NOMBRE EMPRESA)", "am", (r) => r.negocio + (r.nombre ? " · " + r.nombre : "")],
+  ["TELÉFONO", "am", (r) => tel(r.telefono)],
+  ["FECHA DE CONTACTO", "am", (r) => r.fecha_inicial ? corta(r.fecha_inicial) + " " + String(r.fecha_inicial).slice(11, 16) : ""],
+  ["MENSAJE INICIAL", "am", (r) => (r.plantilla || "✓").replace("heynora-", "") + (r.variante ? " · " + r.variante : "") + toque(r, "inicial")],
+  ["F Up 1", "am", (r) => corta(r.fup1) + toque(r, "F1")],
+  ["F Up 2", "am", (r) => corta(r.fup2) + toque(r, "F2")],
+  ["F Up 3", "am", (r) => corta(r.fup3) + toque(r, "F3")],
+  ["F Up 4", "am", (r) => toque(r, "F4")],
+  ["RETARGETING", "na", (r) => ""],
+  ["BOOKED", "ve", (r) => r.llamada_agendada ? "✓ " + (/^\d{4}-/.test(r.llamada_agendada) ? corta(r.llamada_agendada) : "") : ""],
+  ["NOT INTERESTED", "ro", (r) => r.descarte || ""],
+  ["RESPUESTA", "gr", (r) => r.texto_respuesta || ""],
+  ["AUTOMÁTICA", "gr", (r) => r.texto_automatica ? "🤖 " + r.texto_automatica : ""],
+];
+const letra = (i) => String.fromCharCode(65 + i);
+function filasHoja() {
+  const q = ($("#buscar").value || "").toLowerCase().trim();
+  return (DATOS.filas || []).filter((r) => (MES === "TODOS" || (r.fecha_inicial || "").slice(0, 7) === MES))
+    .filter((r) => !q || [r.negocio, r.nombre, r.ciudad, r.telefono].join(" ").toLowerCase().includes(q))
+    .sort((a, b) => (a.fecha_inicial || "").localeCompare(b.fecha_inicial || ""));
 }
+function hoja() {
+  const filas = DATOS.filas || [];
+  const meses = [...new Set(filas.map((r) => (r.fecha_inicial || "").slice(0, 7)).filter(Boolean))].sort();
+  if (!MES || (MES !== "TODOS" && !meses.includes(MES))) MES = meses[meses.length - 1] || "TODOS";
+  $("#pestanas").innerHTML = ["TODOS", ...meses].map((m) => {
+    const n = m === "TODOS" ? filas.length : filas.filter((r) => (r.fecha_inicial || "").startsWith(m)).length;
+    const nombre = m === "TODOS" ? "TODOS" : MESES[+m.slice(5, 7) - 1] + " " + m.slice(0, 4);
+    return `<button role="tab" aria-selected="${m === MES}" class="${m === MES ? "activo" : ""}" data-m="${m}">${nombre}<small>${n}</small></button>`;
+  }).join("");
+  document.querySelectorAll("#pestanas button").forEach((b) => b.onclick = () => { MES = b.dataset.m; hoja(); });
+  const ver = filasHoja();
+  $("#hoja-sub").textContent = `Hey Nora · 642 · ${ver.length} leads`;
+  let h = `<thead><tr class="letras"><th class="num"></th>${COLS.map((_, i) => `<th>${letra(i)}</th>`).join("")}</tr>` +
+    `<tr class="cabecera"><th class="num">1</th>${COLS.map(([t, c]) => `<th class="c-${c}">${t}</th>`).join("")}</tr></thead><tbody>`;
+  h += ver.map((r, i) => `<tr><td class="num">${i + 2}</td>${COLS.map(([t, c, f], j) => {
+    const v = f(r) || "", cls = `c-${c}${j === 0 ? " lead" : ""}${c === "ve" && v ? " marca-ok" : ""}${c === "ro" && v ? " marca-no" : ""}`;
+    return `<td class="${cls}" title="${esc(v)}">${esc(v)}</td>`;
+  }).join("")}</tr>`).join("");
+  if (!ver.length) h += `<tr><td class="num">2</td><td class="c-am" colspan="${COLS.length}">Sin leads en esta pestaña.</td></tr>`;
+  $("#hoja").innerHTML = h + "</tbody>";
+}
+$("#buscar").oninput = () => DATOS && hoja();
+$("#csv").onclick = () => {
+  const lineas = [COLS.map(([t]) => t), ...filasHoja().map((r) => COLS.map(([, , f]) => f(r) || ""))]
+    .map((fila) => fila.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(";"));
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob(["﻿" + lineas.join("\n")], {type: "text/csv;charset=utf-8"}));
+  a.download = `tracker-heynora-${MES === "TODOS" ? "todo" : MES}.csv`; a.click(); URL.revokeObjectURL(a.href);
+};
+
+// ---- Menú: cada sección es una vista (#inicio, #hoja, #clientes, #llamadas, #funciona)
+const TITULOS = {inicio: "Inicio", hoja: "Hoja de seguimiento", clientes: "Clientes", llamadas: "Llamadas", funciona: "Qué funciona"};
+function ir() {
+  const v = (location.hash || "#inicio").slice(1);
+  const vista = TITULOS[v] ? v : "inicio";
+  document.querySelectorAll(".vista").forEach((s) => s.hidden = s.dataset.vista !== vista);
+  document.querySelectorAll(".menu nav a").forEach((a) => { const on = a.dataset.v === vista; a.classList.toggle("activo", on); if (on) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
+  $("#titulo").textContent = TITULOS[vista]; document.title = TITULOS[vista] + " · Panel Hey Nora";
+  if (vista === "inicio" && DATOS) grafica(DATOS.porDia || []);
+  window.scrollTo(0, 0);
+}
+addEventListener("hashchange", ir);
+if (!/access_token|type=recovery/.test(location.hash)) ir(); else document.querySelectorAll(".vista").forEach((s) => s.hidden = s.dataset.vista !== "inicio");
 
 $("#f-login").onsubmit = async (e) => {
   e.preventDefault(); $("#e-login").textContent = "";
