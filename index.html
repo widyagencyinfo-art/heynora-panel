@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="same-origin">
+<title>Panel Hey Nora</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<style>
+@font-face{font-family:Bricolage;src:url(fuentes/bricolage-700.woff2) format("woff2");font-weight:700;font-display:swap}
+@font-face{font-family:Instrument;src:url(fuentes/instrument-400.woff2) format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:Instrument;src:url(fuentes/instrument-600.woff2) format("woff2");font-weight:600;font-display:swap}
+:root{
+  --fondo:#0d1226; --tinta:#1C2541; --naranja:#FF6A2B; --crema:#FAF6F0;
+  --texto:#F4F1EC; --suave:#A9AEC2; --tenue:#6F7590;
+  --vidrio:rgba(255,255,255,.07); --vidrio-2:rgba(255,255,255,.11); --borde:rgba(255,255,255,.14);
+  --verde:#3DDC97; --rojo:#FF6B6B; --gris:#8C93AD; --azul:#7FB2FF; --ambar:#FFC15E;
+  --radio:22px; --sombra:0 24px 60px -24px rgba(0,0,0,.55), 0 2px 0 rgba(255,255,255,.05) inset;
+}
+*{box-sizing:border-box;margin:0}
+html,body{min-height:100%}
+body{font-family:Instrument,system-ui,sans-serif;color:var(--texto);background:var(--fondo);overflow-x:hidden;
+  -webkit-font-smoothing:antialiased}
+/* fondo con manchas de color detrás del cristal */
+.cielo{position:fixed;inset:0;z-index:-1;overflow:hidden;background:radial-gradient(1200px 700px at 10% -10%,#1f2a55 0,transparent 60%),var(--fondo)}
+.mancha{position:absolute;border-radius:50%;filter:blur(90px);opacity:.55;animation:deriva 26s ease-in-out infinite alternate}
+.m1{width:520px;height:520px;background:#FF6A2B;top:-120px;right:-80px}
+.m2{width:620px;height:620px;background:#5b3fd6;bottom:-220px;left:-160px;animation-duration:32s}
+.m3{width:380px;height:380px;background:#1fb8a6;top:40%;left:45%;opacity:.32;animation-duration:38s}
+@keyframes deriva{to{transform:translate(60px,-40px) scale(1.12)}}
+@media (prefers-reduced-motion:reduce){.mancha,.flota{animation:none!important}}
+
+.envoltura{max-width:1320px;margin:0 auto;padding:28px 24px 64px}
+.vidrio{background:var(--vidrio);border:1px solid var(--borde);border-radius:var(--radio);
+  backdrop-filter:blur(22px) saturate(140%);-webkit-backdrop-filter:blur(22px) saturate(140%);box-shadow:var(--sombra)}
+.flota{animation:flota 7s ease-in-out infinite}
+.flota:nth-child(2){animation-delay:-1.7s}.flota:nth-child(3){animation-delay:-3.4s}.flota:nth-child(4){animation-delay:-5.1s}
+@keyframes flota{50%{transform:translateY(-6px)}}
+
+header.barra{display:flex;align-items:center;gap:16px;padding:14px 20px;position:sticky;top:14px;z-index:5;margin-bottom:26px}
+.marca{font-family:Bricolage,sans-serif;font-size:22px;letter-spacing:-.02em}
+.marca b{color:var(--naranja)}
+.etiqueta{font-size:12px;color:var(--suave);border:1px solid var(--borde);padding:4px 10px;border-radius:99px}
+.barra .hueco{flex:1}
+.boton{font:600 13px Instrument,sans-serif;color:var(--texto);background:var(--vidrio-2);border:1px solid var(--borde);
+  border-radius:99px;padding:8px 14px;cursor:pointer;transition:background .2s,transform .2s}
+.boton:hover{background:rgba(255,255,255,.18)}
+.boton.prim{background:var(--naranja);border-color:transparent;color:#fff}
+.boton.prim:hover{background:#ff7d45}
+.boton:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--naranja);outline-offset:2px}
+
+h2{font-family:Bricolage,sans-serif;font-size:19px;letter-spacing:-.01em;margin-bottom:14px;display:flex;align-items:center;gap:10px}
+h2 small{font:400 12px Instrument,sans-serif;color:var(--tenue)}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-bottom:22px}
+.kpi{padding:20px 22px}
+.kpi .t{font-size:13px;color:var(--suave)}
+.kpi .v{font-family:Bricolage,sans-serif;font-size:40px;line-height:1.1;margin:6px 0 4px;font-variant-numeric:tabular-nums}
+.kpi .s{font-size:12px;color:var(--tenue)}
+.kpi.naranja .v{color:var(--naranja)}
+
+.rejilla{display:grid;grid-template-columns:1.6fr 1fr;gap:18px;margin-bottom:22px}
+.caja{padding:22px}
+.lista{display:flex;flex-direction:column;gap:10px;max-height:360px;overflow:auto}
+.item{padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08)}
+.item b{font-weight:600}
+.item p{font-size:13px;color:var(--suave);margin-top:4px;line-height:1.4}
+.vacio{color:var(--tenue);font-size:14px;padding:8px 2px}
+
+.grafica{width:100%;height:220px}
+.leyenda{display:flex;gap:16px;font-size:12px;color:var(--suave);margin-top:8px}
+.leyenda i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+
+.clientes{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:18px;margin-bottom:22px}
+.cliente{padding:22px;position:relative}
+.cliente h3{font-family:Bricolage,sans-serif;font-size:22px;letter-spacing:-.01em}
+.cliente .sub{color:var(--suave);font-size:13px;margin:2px 0 14px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.chip{font-size:12px;padding:4px 10px;border-radius:99px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1)}
+.chip.on{background:rgba(61,220,151,.15);border-color:rgba(61,220,151,.35);color:#9ff0c9}
+.fila{display:grid;grid-template-columns:96px 1fr;gap:8px;font-size:13px;padding:6px 0;border-top:1px solid rgba(255,255,255,.07)}
+.fila span:first-child{color:var(--tenue)}
+.cliente .editar{position:absolute;top:18px;right:18px}
+.clientes{align-items:start}
+.nuevo{display:flex;align-items:center;justify-content:center;min-height:180px;border-style:dashed;cursor:pointer;color:var(--suave);font:600 15px Instrument,sans-serif}
+.nuevo:hover{color:var(--texto)}
+
+.tres{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:22px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{font-weight:600;color:var(--tenue);text-align:left;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.1);white-space:nowrap}
+td{padding:9px 10px;border-bottom:1px solid rgba(255,255,255,.06);vertical-align:top}
+td.n{text-align:right;font-variant-numeric:tabular-nums}
+.barrita{height:6px;border-radius:9px;background:rgba(255,255,255,.08);overflow:hidden;margin-top:5px}
+.barrita i{display:block;height:100%;background:var(--naranja);border-radius:9px}
+.tabla-scroll{overflow:auto;max-height:520px}
+.estado{font-size:11px;font-weight:600;padding:3px 9px;border-radius:99px;white-space:nowrap;background:rgba(255,255,255,.08)}
+.e-llamada{background:rgba(61,220,151,.18);color:#9ff0c9}
+.e-respondio{background:rgba(255,106,43,.2);color:#ffb08d}
+.e-descartado{background:rgba(255,107,107,.16);color:#ffaaaa}
+.e-auto{background:rgba(140,147,173,.18);color:#c4c9da}
+.e-gracias{background:rgba(127,178,255,.16);color:#b7d3ff}
+.filtros{display:flex;flex-wrap:wrap;gap:6px;margin-left:auto}
+.filtros .boton{padding:5px 11px;font-size:12px}
+.filtros .boton.activo{background:var(--naranja);border-color:transparent}
+
+/* login y modal */
+.capa{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(5,8,20,.45);backdrop-filter:blur(6px)}
+.capa[hidden]{display:none}
+.ventana{width:100%;max-width:520px;padding:28px;max-height:92vh;overflow-y:auto;overflow-x:hidden}
+.ventana h3{font-family:Bricolage,sans-serif;font-size:22px;margin-bottom:6px}
+.ventana p{color:var(--suave);font-size:14px;margin-bottom:18px}
+label{display:block;font-size:12px;color:var(--suave);margin:12px 0 5px}
+input,textarea,select{width:100%;font:400 14px Instrument,sans-serif;color:var(--texto);background:rgba(255,255,255,.06);
+  border:1px solid var(--borde);border-radius:12px;padding:10px 12px}
+textarea{min-height:70px;resize:vertical}
+.dos{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.acciones{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+.error{color:var(--rojo);font-size:13px;margin-top:10px;min-height:18px}
+.pie{color:var(--tenue);font-size:12px;text-align:center;margin-top:30px}
+
+@media (max-width:1000px){.kpis{grid-template-columns:repeat(2,1fr)}.rejilla,.tres{grid-template-columns:1fr}}
+@media (max-width:560px){.envoltura{padding:16px 16px 48px}.kpi .v{font-size:32px}.etiqueta{display:none}
+  .clientes{grid-template-columns:1fr}.dos{grid-template-columns:1fr}header.barra{top:8px}}
+</style>
+</head>
+<body>
+<div class="cielo" aria-hidden="true"><div class="mancha m1"></div><div class="mancha m2"></div><div class="mancha m3"></div></div>
+
+<div class="envoltura">
+  <header class="barra vidrio">
+    <div class="marca">hey <b>nora</b></div>
+    <span class="etiqueta">Panel · concesionarios</span>
+    <div class="hueco"></div>
+    <span class="etiqueta" id="act">—</span>
+    <button class="boton" id="recargar" title="Recargar">↻</button>
+    <button class="boton" id="salir">Salir</button>
+  </header>
+
+  <section class="kpis" id="kpis"></section>
+
+  <section class="rejilla">
+    <div class="vidrio caja">
+      <h2>Últimos 14 días <small>mensajes del 642 y respuestas reales</small></h2>
+      <svg class="grafica" id="grafica" role="img" aria-label="Enviados y respuestas por día"></svg>
+      <div class="leyenda"><span><i style="background:rgba(255,255,255,.22)"></i>Enviados</span><span><i style="background:var(--naranja)"></i>Respuestas reales</span><span><i style="background:var(--gris)"></i>Automáticas</span></div>
+    </div>
+    <div class="vidrio caja">
+      <h2>🔥 Por contestar <small>han respondido y nadie les ha escrito</small></h2>
+      <div class="lista" id="calientes"></div>
+    </div>
+  </section>
+
+  <h2 style="margin-top:8px">Clientes <small>lo que tenemos con cada uno</small></h2>
+  <section class="clientes" id="clientes"></section>
+
+  <section class="tres">
+    <div class="vidrio caja">
+      <h2>📞 Llamadas</h2>
+      <div class="lista" id="llamadas"></div>
+    </div>
+    <div class="vidrio caja">
+      <h2>Qué mensaje funciona</h2>
+      <div id="plantillas"></div>
+    </div>
+    <div class="vidrio caja">
+      <h2>Qué cumplido funciona</h2>
+      <div id="cumplidos"></div>
+    </div>
+  </section>
+
+  <section class="vidrio caja">
+    <h2>Tracker del frío <small id="trk-sub"></small>
+      <div class="filtros" id="filtros"></div>
+    </h2>
+    <div class="tabla-scroll"><table id="tracker"></table></div>
+  </section>
+
+  <p class="pie">Lo rellena el Mac mini cada noche a las 00:00. No se mide si leen el mensaje ni si ven el vídeo: WhatsApp no lo dice.</p>
+</div>
+
+<!-- login -->
+<div class="capa" id="login" hidden>
+  <form class="ventana vidrio" id="f-login">
+    <div class="marca" style="margin-bottom:14px">hey <b>nora</b></div>
+    <h3>Entrar al panel</h3>
+    <p>Con tu usuario de panel.widy.agency.</p>
+    <label for="correo">Correo</label>
+    <input id="correo" type="email" autocomplete="username" required>
+    <label for="clave">Contraseña</label>
+    <input id="clave" type="password" autocomplete="current-password" required>
+    <div class="error" id="e-login"></div>
+    <div class="acciones"><button class="boton prim" type="submit">Entrar</button></div>
+  </form>
+</div>
+
+<!-- ficha de cliente -->
+<div class="capa" id="modal" hidden>
+  <form class="ventana vidrio" id="f-cliente">
+    <h3 id="m-titulo">Cliente</h3>
+    <p>Se guarda en el panel al momento.</p>
+    <div class="dos">
+      <div><label for="c-nombre">Nombre</label><input id="c-nombre" required></div>
+      <div><label for="c-estado">Estado</label>
+        <select id="c-estado"><option>activo</option><option>en montaje</option><option>piloto</option><option>pausado</option><option>baja</option></select></div>
+    </div>
+    <label for="c-razon">Razón social</label><input id="c-razon">
+    <label for="c-tipo">Qué es</label><input id="c-tipo" placeholder="Concesionario de…">
+    <div class="dos">
+      <div><label for="c-contacto">Contacto</label><input id="c-contacto"></div>
+      <div><label for="c-telefono">Teléfono</label><input id="c-telefono" inputmode="tel"></div>
+    </div>
+    <div class="dos">
+      <div><label for="c-ciudad">Ciudad</label><input id="c-ciudad"></div>
+      <div><label for="c-alta">Alta</label><input id="c-alta" type="date"></div>
+    </div>
+    <label for="c-servicios">Servicios (separados por comas)</label><input id="c-servicios">
+    <label for="c-cuota">Cuota</label><input id="c-cuota">
+    <label for="c-resultado">Resultado</label><textarea id="c-resultado"></textarea>
+    <label for="c-pendiente">Pendiente</label><textarea id="c-pendiente"></textarea>
+    <label for="c-notas">Notas</label><textarea id="c-notas"></textarea>
+    <div class="error" id="e-cliente"></div>
+    <div class="acciones">
+      <button class="boton" type="button" id="c-borrar">Quitar</button>
+      <div style="flex:1"></div>
+      <button class="boton" type="button" id="c-cancelar">Cancelar</button>
+      <button class="boton prim" type="submit">Guardar</button>
+    </div>
+  </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+// Datos: Supabase del panel de Widy con la sesión de Darío (la clave «anon» es pública; protege el RLS).
+// El tracker y los clientes van en el almacén privado «heynora-panel» (solo las cuentas de Darío).
+const SB_URL = "https://kncmckkgurbjuisdqhdf.supabase.co";
+const SB_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtuY21ja2tndXJianVpc2RxaGRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3ODYyNzEsImV4cCI6MjA5NTM2MjI3MX0.39-22ThglIljBPDmWoM28V4jh2ZNGlR2uK_E_BLHv58";
+const ORG = "2536f96e-4c53-407f-99bb-f30f47458894";
+const sb = supabase.createClient(SB_URL, SB_ANON);
+const ALMACEN = sb.storage.from("heynora-panel");
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const num = (n) => new Intl.NumberFormat("es-ES").format(n || 0);
+const fecha = (s) => { if (!s) return ""; const d = new Date(String(s).replace(" ", "T")); return isNaN(d) ? esc(s) : d.toLocaleDateString("es-ES", {day:"numeric", month:"short"}) + (String(s).length > 10 ? " " + d.toLocaleTimeString("es-ES", {hour:"2-digit", minute:"2-digit"}) : ""); };
+let DATOS = null, CLIENTES = [], FILTRO = "todos", EDITANDO = -1;
+
+const REALES = new Set(["interesado", "pregunta", "no", "cortesía"]);
+const UTILES = new Set(["interesado", "pregunta"]);
+const hace = (d) => new Date(Date.now() - d * 86400000).toISOString().slice(0, 10);
+function resumen(filas) {
+  const n = filas.length, reales = filas.filter((r) => REALES.has(r.tipo_respuesta)).length;
+  return {enviados: n, reales, utiles: filas.filter((r) => UTILES.has(r.tipo_respuesta)).length,
+    automaticas: filas.filter((r) => r.automatica).length, video: filas.filter((r) => r.video_enviado).length,
+    llamadas: filas.filter((r) => r.llamada_agendada).length, pct: n ? Math.round(1000 * reales / n) / 10 : 0};
+}
+function agrupar(filas, campo) {
+  const g = {}; for (const r of filas) if (r[campo]) (g[r[campo]] ||= []).push(r);
+  return Object.entries(g).map(([k, v]) => ({grupo: k, ...resumen(v)})).sort((a, b) => b.enviados - a.enviados);
+}
+async function leerJson(nombre, porDefecto) {
+  const {data, error} = await ALMACEN.download(nombre);
+  if (error) { if (/not found|404/i.test(error.message || "")) return porDefecto; throw new Error("Esta cuenta no puede leer el tracker"); }
+  return JSON.parse(await data.text());
+}
+
+async function cargar() {
+  const {data: {session}} = await sb.auth.getSession();
+  if (!session) { $("#login").hidden = false; $("#correo").focus(); return; }
+  $("#act").textContent = "Cargando…";
+  try {
+    const [tracker, cli, leads, reus] = await Promise.all([
+      leerJson("tracker.json", {filas: []}),
+      leerJson("clientes.json", {clientes: []}),
+      sb.from("leads").select("id,company_name,contact_phone,stage,next_followup_at,notas,updated_at")
+        .eq("organization_id", ORG).or("sector.eq.concesionario,source.ilike.*heynora*,source.ilike.*642*")
+        .order("updated_at", {ascending: false}).limit(300),
+      sb.from("meetings").select("id,titulo,fecha,hora_inicio,tipo,lead_id,client_id,status")
+        .eq("organization_id", ORG).gte("fecha", hace(0)).order("fecha").order("hora_inicio").limit(40),
+    ]);
+    if (leads.error) throw leads.error;
+    const filas = tracker.filas || [], ls = leads.data || [], ids = new Set(ls.map((l) => l.id));
+    const arriba = (l) => (l.notas || "").trim().split("\n")[0];
+    const abiertas = ["lead", "contactado", "llamada_agendada", "propuesta"];
+    const ult = (n) => filas.filter((r) => (r.fecha_inicial || "") >= hace(n));
+    const porDia = {};
+    for (const r of ult(14)) {
+      const d = (r.fecha_inicial || "").slice(0, 10);
+      porDia[d] ||= {dia: d, enviados: 0, reales: 0, automaticas: 0};
+      porDia[d].enviados++; if (REALES.has(r.tipo_respuesta)) porDia[d].reales++; if (r.automatica) porDia[d].automaticas++;
+    }
+    DATOS = {
+      actualizadoTracker: tracker.actualizado || null, semana: resumen(ult(7)), total: resumen(filas),
+      porPlantilla: agrupar(filas, "plantilla"), porVariante: agrupar(filas, "variante"), porCumplido: agrupar(filas, "tipo_cumplido"),
+      porDia: Object.values(porDia).sort((a, b) => a.dia.localeCompare(b.dia)),
+      calientes: ls.filter((l) => abiertas.includes(l.stage) && arriba(l).includes("🔥"))
+        .map((l) => ({empresa: l.company_name, tel: l.contact_phone, ultima: arriba(l).slice(0, 220)})),
+      llamadas: ls.filter((l) => l.stage === "llamada_agendada")
+        .map((l) => ({empresa: l.company_name, cuando: l.next_followup_at, ultima: arriba(l).slice(0, 160)})),
+      reuniones: (reus.data || []).filter((m) => (m.lead_id && ids.has(m.lead_id)) || (!m.lead_id && /conce|motor|auto|coche|moto|nora/i.test(m.titulo || ""))),
+      ultimos: [...filas].sort((a, b) => (b.actualizado || b.fecha_inicial || "").localeCompare(a.actualizado || a.fecha_inicial || "")).slice(0, 80),
+    };
+    CLIENTES = cli.clientes || [];
+    pintar();
+  } catch (e) { $("#act").textContent = "Error: " + (e.message || e); }
+}
+
+function kpi(t, v, s, extra = "") { return `<div class="vidrio kpi flota ${extra}"><div class="t">${t}</div><div class="v">${v}</div><div class="s">${s}</div></div>`; }
+
+function pintar() {
+  const s = DATOS.semana, t = DATOS.total;
+  $("#act").textContent = DATOS.actualizadoTracker ? "Tracker: " + fecha(DATOS.actualizadoTracker) : "Sin tracker";
+  $("#kpis").innerHTML =
+    kpi("Enviados · 7 días", num(s.enviados), `${num(t.enviados)} en total`) +
+    kpi("Respuestas reales · 7 días", num(s.reales), `${s.pct}% · en total ${num(t.reales)} (${t.pct}%)`, "naranja") +
+    kpi("Automáticas · 7 días", num(s.automaticas), "no cuentan como respuesta") +
+    kpi("Llamadas agendadas", num(t.llamadas), `${t.enviados ? (100 * t.llamadas / t.enviados).toFixed(1) : 0} por cada 100 enviados`);
+  grafica(DATOS.porDia || []);
+  $("#calientes").innerHTML = (DATOS.calientes || []).map((l) => `<div class="item"><b>${esc(l.empresa)}</b> <span class="etiqueta">${esc(l.tel || "")}</span><p>${esc(l.ultima)}</p></div>`).join("") || `<div class="vacio">Nadie esperando respuesta.</div>`;
+  const ll = [...(DATOS.llamadas || []).map((l) => `<div class="item"><b>${esc(l.empresa)}</b><p>${l.cuando ? fecha(l.cuando) + " · " : ""}${esc(l.ultima)}</p></div>`),
+              ...(DATOS.reuniones || []).map((m) => `<div class="item"><b>${esc(m.titulo)}</b><p>${fecha(m.fecha)} ${esc((m.hora_inicio || "").slice(0,5))} · ${esc(m.tipo || "")}</p></div>`)];
+  $("#llamadas").innerHTML = ll.join("") || `<div class="vacio">Sin llamadas agendadas.</div>`;
+  $("#plantillas").innerHTML = tablaGrupos([...(DATOS.porVariante || []), ...(DATOS.porPlantilla || [])]);
+  $("#cumplidos").innerHTML = tablaGrupos(DATOS.porCumplido || []);
+  clientes(); tracker();
+}
+
+function tablaGrupos(gs) {
+  if (!gs.length) return `<div class="vacio">Sin datos aún.</div>`;
+  const max = Math.max(...gs.map((g) => g.pct), 1);
+  return `<table><tr><th>Grupo</th><th class="n">Env.</th><th class="n">Resp.</th></tr>` + gs.map((g) =>
+    `<tr><td>${esc(g.grupo)}<div class="barrita"><i style="width:${(100 * g.pct / max).toFixed(0)}%"></i></div></td><td class="n">${num(g.enviados)}</td><td class="n">${g.pct}%</td></tr>`).join("") +
+    `</table><p class="vacio" style="font-size:12px">Con menos de 100 envíos por grupo, el % aún baila.</p>`;
+}
+
+function grafica(dias) {
+  const svg = $("#grafica"), W = svg.clientWidth || 600, H = 220, p = {l: 28, r: 8, t: 10, b: 26};
+  if (!dias.length) { svg.innerHTML = `<text x="10" y="30" fill="#6F7590" font-size="13">Sin envíos en 14 días</text>`; return; }
+  const max = Math.max(...dias.map((d) => d.enviados), 1), bw = (W - p.l - p.r) / dias.length;
+  const y = (v) => H - p.b - (v / max) * (H - p.t - p.b);
+  let h = "";
+  for (const k of [0, .5, 1]) { const v = Math.round(max * k), yy = y(v); h += `<line x1="${p.l}" x2="${W - p.r}" y1="${yy}" y2="${yy}" stroke="rgba(255,255,255,.07)"/><text x="${p.l - 6}" y="${yy + 4}" text-anchor="end" fill="#6F7590" font-size="10">${v}</text>`; }
+  dias.forEach((d, i) => {
+    const x = p.l + i * bw + bw * .18, w = bw * .64;
+    h += `<rect x="${x}" y="${y(d.enviados)}" width="${w}" height="${H - p.b - y(d.enviados)}" rx="5" fill="rgba(255,255,255,.18)"><title>${esc(d.dia)}: ${d.enviados} enviados</title></rect>`;
+    if (d.automaticas) h += `<rect x="${x + w * .55}" y="${y(d.automaticas)}" width="${w * .4}" height="${H - p.b - y(d.automaticas)}" rx="3" fill="#8C93AD"><title>${d.automaticas} automáticas</title></rect>`;
+    if (d.reales) h += `<rect x="${x + w * .08}" y="${y(d.reales)}" width="${w * .4}" height="${H - p.b - y(d.reales)}" rx="3" fill="#FF6A2B"><title>${d.reales} respuestas reales</title></rect>`;
+    if (bw > 34 || (dias.length - 1 - i) % 2 === 0) h += `<text x="${x + w / 2}" y="${H - 8}" text-anchor="middle" fill="#6F7590" font-size="10">${esc(d.dia.slice(8))}/${esc(d.dia.slice(5, 7))}</text>`;
+  });
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.innerHTML = h;
+}
+
+function clientes() {
+  $("#clientes").innerHTML = CLIENTES.map((c, i) => `
+    <article class="vidrio cliente flota">
+      <button class="boton editar" data-i="${i}">Editar</button>
+      <h3>${esc(c.nombre)}</h3>
+      <div class="sub">${esc([c.tipo, c.ciudad].filter(Boolean).join(" · "))}</div>
+      <div class="chips"><span class="chip on">${esc(c.estado || "activo")}</span>${(c.servicios || []).map((s) => `<span class="chip">${esc(s)}</span>`).join("")}</div>
+      ${[["Contacto", [c.contacto, c.telefono].filter(Boolean).join(" · ")], ["Alta", c.alta], ["Cuota", c.cuota], ["Resultado", c.resultado], ["Pendiente", c.pendiente], ["Notas", c.notas]]
+        .filter(([, v]) => v).map(([k, v]) => `<div class="fila"><span>${k}</span><span>${esc(v)}</span></div>`).join("")}
+    </article>`).join("") + `<button class="vidrio nuevo" id="nuevo-cliente">+ Añadir cliente</button>`;
+  document.querySelectorAll(".editar").forEach((b) => b.onclick = () => abrir(+b.dataset.i));
+  $("#nuevo-cliente").onclick = () => abrir(-1);
+}
+
+const CAMPOS = ["nombre", "estado", "razon", "tipo", "contacto", "telefono", "ciudad", "alta", "cuota", "resultado", "pendiente", "notas"];
+function abrir(i) {
+  EDITANDO = i; const c = i >= 0 ? CLIENTES[i] : {estado: "activo"};
+  $("#m-titulo").textContent = i >= 0 ? c.nombre : "Nuevo cliente";
+  for (const k of CAMPOS) $("#c-" + k).value = c[k] || "";
+  $("#c-servicios").value = (c.servicios || []).join(", ");
+  $("#c-borrar").hidden = i < 0; $("#e-cliente").textContent = "";
+  $("#modal").hidden = false; $("#c-nombre").focus();
+}
+async function guardarClientes(lista) {
+  lista = lista.map((c) => ({...c, id: c.id || (c.nombre || "").toLowerCase().normalize("NFD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || String(Date.now())}));
+  const cuerpo = new Blob([JSON.stringify({actualizado: new Date().toISOString(), clientes: lista})], {type: "application/json"});
+  const {error} = await ALMACEN.upload("clientes.json", cuerpo, {upsert: true, cacheControl: "0", contentType: "application/json"});
+  if (error) throw new Error("No se pudo guardar: " + error.message);
+  CLIENTES = lista; clientes();
+}
+$("#f-cliente").onsubmit = async (e) => {
+  e.preventDefault();
+  const c = EDITANDO >= 0 ? {...CLIENTES[EDITANDO]} : {};
+  for (const k of CAMPOS) c[k] = $("#c-" + k).value.trim();
+  c.servicios = $("#c-servicios").value.split(",").map((s) => s.trim()).filter(Boolean);
+  const lista = [...CLIENTES]; if (EDITANDO >= 0) lista[EDITANDO] = c; else lista.push(c);
+  try { await guardarClientes(lista); $("#modal").hidden = true; } catch (err) { $("#e-cliente").textContent = err.message; }
+};
+$("#c-borrar").onclick = async () => {
+  if (EDITANDO < 0 || !confirm(`¿Quitar a ${CLIENTES[EDITANDO].nombre} del panel?`)) return;
+  try { await guardarClientes(CLIENTES.filter((_, j) => j !== EDITANDO)); $("#modal").hidden = true; } catch (err) { $("#e-cliente").textContent = err.message; }
+};
+$("#c-cancelar").onclick = () => $("#modal").hidden = true;
+$("#modal").onclick = (e) => { if (e.target.id === "modal") $("#modal").hidden = true; };
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") $("#modal").hidden = true; });
+
+const ESTADOS = {"llamada": "e-llamada", "respondió": "e-respondio", "descartado": "e-descartado", "solo automática": "e-auto", "solo gracias": "e-gracias"};
+function tracker() {
+  const filas = DATOS.ultimos || [];
+  const cuenta = {}; filas.forEach((r) => cuenta[r.estado || "—"] = (cuenta[r.estado || "—"] || 0) + 1);
+  $("#filtros").innerHTML = ["todos", ...Object.keys(cuenta)].map((e) => `<button class="boton ${e === FILTRO ? "activo" : ""}" data-e="${esc(e)}">${esc(e)}${e === "todos" ? "" : " · " + cuenta[e]}</button>`).join("");
+  document.querySelectorAll("#filtros .boton").forEach((b) => b.onclick = () => { FILTRO = b.dataset.e; tracker(); });
+  $("#trk-sub").textContent = `los ${filas.length} más recientes`;
+  const ver = filas.filter((r) => FILTRO === "todos" || (r.estado || "—") === FILTRO);
+  $("#tracker").innerHTML = `<tr><th>Concesionario</th><th>Ciudad</th><th>Contacto</th><th>Mensaje</th><th>F UP</th><th>Respuesta</th><th>Estado</th></tr>` +
+    ver.map((r) => `<tr><td><b>${esc(r.negocio)}</b>${r.nombre ? `<br><span style="color:var(--tenue)">${esc(r.nombre)}</span>` : ""}</td>
+      <td>${esc(r.ciudad)}</td><td>${fecha(r.fecha_inicial)}</td><td>${esc([r.plantilla, r.variante].filter(Boolean).join(" · "))}</td>
+      <td>${["fup1", "fup2", "fup3"].filter((f) => r[f]).length || "—"}</td>
+      <td style="max-width:340px">${esc(r.texto_respuesta || (r.texto_automatica ? "🤖 " + r.texto_automatica : ""))}${r.contesto_en ? `<br><span style="color:var(--tenue)">en ${esc(r.contesto_en)}</span>` : ""}</td>
+      <td><span class="estado ${ESTADOS[r.estado] || ""}">${esc(r.estado || "—")}</span></td></tr>`).join("");
+}
+
+$("#f-login").onsubmit = async (e) => {
+  e.preventDefault(); $("#e-login").textContent = "";
+  const {error} = await sb.auth.signInWithPassword({email: $("#correo").value.trim(), password: $("#clave").value});
+  if (!error) { $("#login").hidden = true; $("#clave").value = ""; cargar(); } else $("#e-login").textContent = "Correo o contraseña incorrectos";
+};
+$("#salir").onclick = async () => { await sb.auth.signOut(); location.reload(); };
+$("#recargar").onclick = cargar;
+addEventListener("resize", () => DATOS && grafica(DATOS.porDia || []));
+cargar();
+</script>
+</body>
+</html>
