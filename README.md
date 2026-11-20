@@ -3,7 +3,7 @@
 Panel de cristal («glass») con todo lo de Hey Nora: clientes (Motovatio…), 🔥 por contestar, llamadas,
 qué mensaje y qué cumplido funcionan, y el tracker del frío del 642.
 
-- **Una sola página** (`index.html`), publicada con **GitHub Pages** (repo `widyagencyinfo-art/heynora-panel`), de momento en https://widyagencyinfo-art.github.io/heynora-panel/ (para `panel.heynora.es`: CNAME en Cloudflare y dominio en Settings → Pages).
+- **Una sola página** (`index.html`), publicada con **GitHub Pages** (repo `widyagencyinfo-art/heynora-panel`), dominio **https://panel.heynora.es** (fichero `CNAME`; en Cloudflare: CNAME `panel` → `widyagencyinfo-art.github.io`, nube gris).
 - **Entrar:** con el usuario de panel.widy.agency (Supabase Auth). La página solo lleva la clave pública «anon»;
   los datos los protege el RLS del panel. Nada secreto en el repo.
 - **Datos:** `leads` y `meetings` del panel (organización Widy, concesionarios/642) + almacén privado `heynora-panel`:
