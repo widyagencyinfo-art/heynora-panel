@@ -23,20 +23,20 @@ html,body{min-height:100%}
 body{font-family:Instrument,system-ui,sans-serif;color:var(--texto);background:var(--fondo);overflow-x:hidden;
   -webkit-font-smoothing:antialiased}
 /* fondo con manchas de color detrás del cristal */
-.cielo{position:fixed;inset:0;z-index:-1;overflow:hidden;background:radial-gradient(1200px 700px at 10% -10%,#1f2a55 0,transparent 60%),var(--fondo)}
-.mancha{position:absolute;border-radius:50%;filter:blur(90px);opacity:.55;animation:deriva 26s ease-in-out infinite alternate}
-.m1{width:520px;height:520px;background:#FF6A2B;top:-120px;right:-80px}
-.m2{width:620px;height:620px;background:#5b3fd6;bottom:-220px;left:-160px;animation-duration:32s}
-.m3{width:380px;height:380px;background:#1fb8a6;top:40%;left:45%;opacity:.32;animation-duration:38s}
-@keyframes deriva{to{transform:translate(60px,-40px) scale(1.12)}}
-@media (prefers-reduced-motion:reduce){.mancha,.flota{animation:none!important}}
-
+/* Fondo de color fijo (antes: manchas desenfocadas animadas → el ratón iba a tirones) */
+.cielo{position:fixed;inset:0;z-index:-1;background:
+  radial-gradient(520px 520px at 92% 4%,rgba(255,106,43,.55),transparent 70%),
+  radial-gradient(680px 640px at 4% 100%,rgba(91,63,214,.6),transparent 70%),
+  radial-gradient(420px 420px at 55% 55%,rgba(31,184,166,.22),transparent 70%),
+  radial-gradient(1200px 700px at 10% -10%,#1f2a55 0,transparent 60%),var(--fondo)}
 .envoltura{max-width:1320px;margin:0 auto;padding:28px 24px 64px}
-.vidrio{background:var(--vidrio);border:1px solid var(--borde);border-radius:var(--radio);
-  backdrop-filter:blur(22px) saturate(140%);-webkit-backdrop-filter:blur(22px) saturate(140%);box-shadow:var(--sombra)}
-.flota{animation:flota 7s ease-in-out infinite}
-.flota:nth-child(2){animation-delay:-1.7s}.flota:nth-child(3){animation-delay:-3.4s}.flota:nth-child(4){animation-delay:-5.1s}
-@keyframes flota{50%{transform:translateY(-6px)}}
+/* Cristal sin desenfoque en las tarjetas (el fondo es fijo, no hace falta); solo la barra y las ventanas lo llevan */
+.vidrio{background:linear-gradient(160deg,rgba(255,255,255,.11),rgba(255,255,255,.05));border:1px solid var(--borde);
+  border-radius:var(--radio);box-shadow:var(--sombra)}
+header.barra,.ventana{background:rgba(22,28,58,.62);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.flota{transition:transform .25s ease,box-shadow .25s ease}
+.flota:hover{transform:translateY(-4px);box-shadow:0 30px 70px -24px rgba(0,0,0,.6),0 2px 0 rgba(255,255,255,.06) inset}
+@media (prefers-reduced-motion:reduce){.flota,.flota:hover{transition:none;transform:none}}
 
 header.barra{display:flex;align-items:center;gap:16px;padding:14px 20px;position:sticky;top:14px;z-index:5;margin-bottom:26px}
 .marca{font-family:Bricolage,sans-serif;font-size:22px;letter-spacing:-.02em}
@@ -104,7 +104,7 @@ td.n{text-align:right;font-variant-numeric:tabular-nums}
 .filtros .boton.activo{background:var(--naranja);border-color:transparent}
 
 /* login y modal */
-.capa{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(5,8,20,.45);backdrop-filter:blur(6px)}
+.capa{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(5,8,20,.6)}
 .capa[hidden]{display:none}
 .ventana{width:100%;max-width:520px;padding:28px;max-height:92vh;overflow-y:auto;overflow-x:hidden}
 .ventana h3{font-family:Bricolage,sans-serif;font-size:22px;margin-bottom:6px}
@@ -124,7 +124,7 @@ textarea{min-height:70px;resize:vertical}
 </style>
 </head>
 <body>
-<div class="cielo" aria-hidden="true"><div class="mancha m1"></div><div class="mancha m2"></div><div class="mancha m3"></div></div>
+<div class="cielo" aria-hidden="true"></div>
 
 <div class="envoltura">
   <header class="barra vidrio">
