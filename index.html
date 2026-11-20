@@ -252,7 +252,7 @@ td.c-am.lead{background:#272a37}
         <div class="hoja-scroll"><table class="hoja" id="hoja"></table></div>
         <div class="pestanas" id="pestanas" role="tablist" aria-label="Meses"></div>
       </div>
-      <p class="pie">💬 = contestó en ese toque · 🤖 = solo respuesta automática (no cuenta). No se mide si leen el mensaje ni si ven el vídeo: WhatsApp no lo dice.</p>
+      <p class="pie">💬 = contestó en ese toque · 🤖 = solo respuesta automática (no cuenta) · F Up: el cartero los manda solo desde el lunes 23-nov (F1 a los 2 días, F2 a los 3 del F1, F3 a los 5 del F2; «—» = lead de antes, sin seguimiento). No se mide si leen el mensaje ni si ven el vídeo: WhatsApp no lo dice.</p>
     </section>
 
     <!-- CLIENTES -->
@@ -524,15 +524,18 @@ let MES = null;
 const corta = (s) => s ? String(s).slice(8, 10) + "/" + String(s).slice(5, 7) : "";
 const tel = (t) => String(t || "").replace(/^34(?=\d{9}$)/, "").replace(/(\d{3})(\d{3})(\d{3})$/, "$1 $2 $3");
 const toque = (r, k) => r.contesto_en === k ? " 💬" : "";
+const INICIO_SEG = "2026-11-23"; // los seguimientos F1-F4 cuentan desde el lunes 23-nov
+const sinSeg = (r) => (r.fecha_inicial || "") < INICIO_SEG;
+const fup = (r, n) => sinSeg(r) ? (toque(r, "F" + n) || "—") : corta(r["fup" + n]) + toque(r, "F" + n);
 const COLS = [
   ["LEAD (NOMBRE EMPRESA)", "am", (r) => r.negocio + (r.nombre ? " · " + r.nombre : "")],
   ["TELÉFONO", "am", (r) => tel(r.telefono)],
   ["FECHA DE CONTACTO", "am", (r) => r.fecha_inicial ? corta(r.fecha_inicial) + " " + String(r.fecha_inicial).slice(11, 16) : ""],
   ["MENSAJE INICIAL", "am", (r) => (r.plantilla || "✓").replace("heynora-", "") + (r.variante ? " · " + r.variante : "") + toque(r, "inicial")],
-  ["F Up 1", "am", (r) => corta(r.fup1) + toque(r, "F1")],
-  ["F Up 2", "am", (r) => corta(r.fup2) + toque(r, "F2")],
-  ["F Up 3", "am", (r) => corta(r.fup3) + toque(r, "F3")],
-  ["F Up 4", "am", (r) => toque(r, "F4")],
+  ["F Up 1", "am", (r) => fup(r, 1)],
+  ["F Up 2", "am", (r) => fup(r, 2)],
+  ["F Up 3", "am", (r) => fup(r, 3)],
+  ["F Up 4", "am", (r) => sinSeg(r) ? "—" : toque(r, "F4")],
   ["RETARGETING", "na", (r) => ""],
   ["BOOKED", "ve", (r) => r.llamada_agendada ? "✓ " + (/^\d{4}-/.test(r.llamada_agendada) ? corta(r.llamada_agendada) : "") : ""],
   ["NOT INTERESTED", "ro", (r) => r.descarte || ""],
@@ -542,17 +545,19 @@ const COLS = [
 const letra = (i) => String.fromCharCode(65 + i);
 function filasHoja() {
   const q = ($("#buscar").value || "").toLowerCase().trim();
-  return (DATOS.filas || []).filter((r) => (MES === "TODOS" || (r.fecha_inicial || "").slice(0, 7) === MES))
+  return (DATOS.filas || []).filter((r) => (MES === "TODOS" || (MES === "SEG" ? !sinSeg(r) : (r.fecha_inicial || "").slice(0, 7) === MES)))
     .filter((r) => !q || [r.negocio, r.nombre, r.ciudad, r.telefono].join(" ").toLowerCase().includes(q))
     .sort((a, b) => (a.fecha_inicial || "").localeCompare(b.fecha_inicial || ""));
 }
 function hoja() {
   const filas = DATOS.filas || [];
   const meses = [...new Set(filas.map((r) => (r.fecha_inicial || "").slice(0, 7)).filter(Boolean))].sort();
-  if (!MES || (MES !== "TODOS" && !meses.includes(MES))) MES = meses[meses.length - 1] || "TODOS";
-  $("#pestanas").innerHTML = ["TODOS", ...meses].map((m) => {
-    const n = m === "TODOS" ? filas.length : filas.filter((r) => (r.fecha_inicial || "").startsWith(m)).length;
-    const nombre = m === "TODOS" ? "TODOS" : MESES[+m.slice(5, 7) - 1] + " " + m.slice(0, 4);
+  const nSeg = filas.filter((r) => !sinSeg(r)).length;
+  if (!MES) MES = nSeg ? "SEG" : (meses[meses.length - 1] || "TODOS");
+  if (MES !== "TODOS" && MES !== "SEG" && !meses.includes(MES)) MES = meses[meses.length - 1] || "TODOS";
+  $("#pestanas").innerHTML = ["SEG", "TODOS", ...meses].map((m) => {
+    const n = m === "TODOS" ? filas.length : m === "SEG" ? nSeg : filas.filter((r) => (r.fecha_inicial || "").startsWith(m)).length;
+    const nombre = m === "TODOS" ? "TODOS" : m === "SEG" ? "CON SEGUIMIENTO (desde 23-nov)" : MESES[+m.slice(5, 7) - 1] + " " + m.slice(0, 4);
     return `<button role="tab" aria-selected="${m === MES}" class="${m === MES ? "activo" : ""}" data-m="${m}">${nombre}<small>${n}</small></button>`;
   }).join("");
   document.querySelectorAll("#pestanas button").forEach((b) => b.onclick = () => { MES = b.dataset.m; hoja(); });
@@ -573,7 +578,7 @@ $("#csv").onclick = () => {
     .map((fila) => fila.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(";"));
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob(["﻿" + lineas.join("\n")], {type: "text/csv;charset=utf-8"}));
-  a.download = `tracker-heynora-${MES === "TODOS" ? "todo" : MES}.csv`; a.click(); URL.revokeObjectURL(a.href);
+  a.download = `tracker-heynora-${MES === "TODOS" ? "todo" : MES === "SEG" ? "desde-23nov" : MES}.csv`; a.click(); URL.revokeObjectURL(a.href);
 };
 
 // ---- Menú: cada sección es una vista (#inicio, #hoja, #clientes, #llamadas, #funciona)
