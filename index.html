@@ -189,7 +189,22 @@ textarea{min-height:70px;resize:vertical}
     <label for="clave">Contraseña</label>
     <input id="clave" type="password" autocomplete="current-password" required>
     <div class="error" id="e-login"></div>
-    <div class="acciones"><button class="boton prim" type="submit">Entrar</button></div>
+    <div class="acciones"><button class="boton" type="button" id="olvide">¿Has olvidado la contraseña?</button><div style="flex:1"></div><button class="boton prim" type="submit">Entrar</button></div>
+  </form>
+</div>
+
+<!-- nueva contraseña (al volver del enlace del correo) -->
+<div class="capa" id="nueva" hidden>
+  <form class="ventana vidrio" id="f-nueva">
+    <div class="marca" style="margin-bottom:14px">hey <b>nora</b></div>
+    <h3>Pon tu nueva contraseña</h3>
+    <p>Te vale para panel.heynora.es y para panel.widy.agency.</p>
+    <label for="nueva1">Nueva contraseña</label>
+    <input id="nueva1" type="password" autocomplete="new-password" minlength="6" required>
+    <label for="nueva2">Repítela</label>
+    <input id="nueva2" type="password" autocomplete="new-password" minlength="6" required>
+    <div class="error" id="e-nueva"></div>
+    <div class="acciones"><button class="boton prim" type="submit">Guardar y entrar</button></div>
   </form>
 </div>
 
@@ -415,10 +430,29 @@ $("#f-login").onsubmit = async (e) => {
   const {error} = await sb.auth.signInWithPassword({email: $("#correo").value.trim(), password: $("#clave").value});
   if (!error) { $("#login").hidden = true; $("#clave").value = ""; cargar(); } else $("#e-login").textContent = "Correo o contraseña incorrectos";
 };
+$("#olvide").onclick = async () => {
+  const correo = $("#correo").value.trim();
+  if (!correo) { $("#e-login").textContent = "Escribe primero tu correo"; $("#correo").focus(); return; }
+  const {error} = await sb.auth.resetPasswordForEmail(correo, {redirectTo: location.origin + location.pathname});
+  $("#e-login").style.color = error ? "" : "var(--verde)";
+  $("#e-login").textContent = error ? "No se pudo mandar el correo: " + error.message : "Te he mandado un correo con un enlace para poner una contraseña nueva.";
+};
+$("#f-nueva").onsubmit = async (e) => {
+  e.preventDefault(); $("#e-nueva").textContent = "";
+  if ($("#nueva1").value !== $("#nueva2").value) { $("#e-nueva").textContent = "No coinciden"; return; }
+  const {error} = await sb.auth.updateUser({password: $("#nueva1").value});
+  if (error) { $("#e-nueva").textContent = "No se pudo guardar: " + error.message; return; }
+  $("#nueva1").value = $("#nueva2").value = ""; $("#nueva").hidden = true;
+  history.replaceState(null, "", location.pathname); cargar();
+};
+let RECUPERANDO = /type=recovery/.test(location.hash);
+sb.auth.onAuthStateChange((evento) => {
+  if (evento === "PASSWORD_RECOVERY") { RECUPERANDO = true; $("#login").hidden = true; $("#nueva").hidden = false; $("#nueva1").focus(); }
+});
 $("#salir").onclick = async () => { await sb.auth.signOut(); location.reload(); };
 $("#recargar").onclick = cargar;
 addEventListener("resize", () => DATOS && grafica(DATOS.porDia || []));
-cargar();
+if (RECUPERANDO) { $("#nueva").hidden = false; } else cargar();
 </script>
 </body>
 </html>
