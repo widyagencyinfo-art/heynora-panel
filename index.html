@@ -180,7 +180,7 @@ td.c-am.lead{background:#272a37}
 .cal-cab .leyenda{margin-left:auto;font-size:12px;color:var(--suave);display:flex;gap:14px;align-items:center}
 .cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
 .cal-dow{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--tenue);text-align:center;padding:2px 0 4px}
-.cal-dia{min-height:108px;padding:6px 6px 8px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);overflow:hidden}
+.cal-dia{min-height:86px;padding:6px 6px 8px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);overflow:hidden}
 .cal-dia .n{display:inline-block;font-size:12px;color:var(--suave);font-weight:600;margin-bottom:2px}
 .cal-dia.otro{opacity:.35} .cal-dia.pasado:not(.otro){opacity:.7}
 .cal-dia.hoy{border-color:var(--naranja);background:rgba(255,106,43,.08)} .cal-dia.hoy .n{color:var(--naranja)}
@@ -797,19 +797,20 @@ let CAL = {y: null, m: null, sel: null}, CAL_EVS = [];
 const ymd = (d) => d.toLocaleDateString("en-CA");
 const MESN = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
 const DIAS3 = ["dom","lun","mar","mié","jue","vie","sáb"];
+const limpio = (s) => String(s || "").replace(/\s*·\s*(PROVISIONAL|HORA POR CONFIRMAR)\s*$/i, "").replace(/\s*\(Hey Nora\)\s*$/i, "").replace(/^Llamada\s+/i, "");
 const diaLargo = (s) => { const d = new Date(s + "T12:00:00"); return DIAS3[d.getDay()] + " " + d.getDate() + " " + MESN[d.getMonth()].slice(0, 3); };
 function eventosCal() {
   const evs = [], conReunion = new Set();
   for (const m of DATOS.reuniones || []) {
     if (m.status === "cancelada") continue;
     if (m.lead_id) conReunion.add(m.lead_id);
-    evs.push({fecha: m.fecha, hora: (m.hora_inicio || "").slice(0, 5), fin: (m.hora_fin || "").slice(0, 5), titulo: m.titulo || "Llamada", desc: m.descripcion || "",
+    evs.push({fecha: m.fecha, hora: (m.hora_inicio || "").slice(0, 5), fin: (m.hora_fin || "").slice(0, 5), titulo: limpio(m.titulo) || "Llamada", desc: m.descripcion || "",
       prov: m.color === "amber" || /PROVISIONAL|POR CONFIRMAR/i.test(m.titulo || ""), hecha: m.status === "realizada"});
   }
   for (const l of DATOS.llamadas || []) {   // leads en «llamada agendada» que aún no tienen reunión puesta
     if (conReunion.has(l.id) || !l.cuando) continue;
     const d = new Date(l.cuando); if (isNaN(d)) continue;
-    evs.push({fecha: ymd(d), hora: "", fin: "", titulo: l.empresa || "Llamada", desc: l.ultima || "", prov: true, hecha: false});
+    evs.push({fecha: ymd(d), hora: "", fin: "", titulo: l.empresa || "Llamada", desc: l.ultima || "", prov: ymd(d) >= ymd(new Date()), hecha: false});
   }
   return evs.sort((a, b) => (a.fecha + (a.hora || "99")).localeCompare(b.fecha + (b.hora || "99")));
 }
@@ -827,7 +828,7 @@ function calendario() {
   for (let i = 0; i < celdas; i++) {
     const d = new Date(CAL.y, CAL.m, 1 - off + i), s = ymd(d);
     h += `<div class="cal-dia${d.getMonth() !== CAL.m ? " otro" : ""}${s === hoy ? " hoy" : ""}${s < hoy ? " pasado" : ""}"><span class="n">${d.getDate()}</span>` +
-      (por[s] || []).map((k) => { const e = CAL_EVS[k]; return `<button class="ev${e.prov ? " prov" : ""}${e.hecha ? " hecha" : ""}" data-i="${k}" title="${esc(e.titulo)}">${e.hora ? `<span class="h">${e.hora}</span>` : ""}${esc(e.titulo.replace(/^Llamada\s+/i, ""))}</button>`; }).join("") + `</div>`;
+      (por[s] || []).map((k) => { const e = CAL_EVS[k]; return `<button class="ev${e.prov ? " prov" : ""}${e.hecha ? " hecha" : ""}" data-i="${k}" title="${esc(e.titulo)}">${e.hora ? `<span class="h">${e.hora}</span>` : ""}${esc(e.titulo)}</button>`; }).join("") + `</div>`;
   }
   h += `</div><div id="cal-det"></div>`;
   const prox = CAL_EVS.map((e, i) => [e, i]).filter(([e]) => e.fecha >= hoy);
