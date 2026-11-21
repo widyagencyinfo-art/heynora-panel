@@ -166,6 +166,12 @@ td.c-am.lead{background:#272a37}
 .hoja .marca-ok{color:#8ef0b8;font-weight:600}
 .hoja .marca-no{color:#ffb0b0}
 .hoja td.x-ok{color:#8ef0b8;font-weight:800;text-align:center;letter-spacing:.04em}
+.hoja tbody tr.interes td{background:rgba(61,220,151,.13)} .hoja tbody tr.interes td.lead{background:rgba(61,220,151,.24)}
+.hoja td.resp{white-space:normal;min-width:260px;max-width:460px;line-height:1.35}
+.hoja .num{min-width:62px;white-space:nowrap}
+.hoja .lapiz{margin-left:5px;background:none;border:0;color:var(--suave);cursor:pointer;font-size:12px;padding:0 2px}
+.hoja .lapiz:hover{color:var(--naranja)}
+#f-lead .dos{grid-template-columns:1fr 1fr}
 .pestanas{display:flex;gap:2px;overflow-x:auto;padding:8px 0 10px;margin-top:2px}
 .pestanas button{font:600 12px Instrument,sans-serif;letter-spacing:.03em;color:var(--suave);background:transparent;border:0;border-radius:8px 8px 0 0;
   padding:8px 14px;cursor:pointer;white-space:nowrap;border-top:2px solid transparent}
@@ -248,6 +254,8 @@ td.c-am.lead{background:#272a37}
           <h2>Tracker métricas WhatsApp <small id="hoja-sub"></small></h2>
           <div class="hueco"></div>
           <input id="buscar" type="search" placeholder="Buscar concesionario, ciudad o teléfono" aria-label="Buscar en la hoja">
+          <button class="boton prim" id="nuevo-lead" type="button">＋ Añadir lead</button>
+          <button class="boton" id="restaurar" type="button" hidden>↺ Restaurar quitados</button>
           <button class="boton" id="csv">Descargar CSV</button>
         </div>
         <div class="hoja-scroll"><table class="hoja" id="hoja"></table></div>
@@ -345,6 +353,44 @@ td.c-am.lead{background:#272a37}
   </form>
 </div>
 
+<!-- ficha de lead de la hoja -->
+<div class="capa" id="modal-lead" hidden>
+  <form class="ventana vidrio" id="f-lead">
+    <h3 id="l-titulo">Lead</h3>
+    <p>Se guarda en el panel al momento. Lo que cambies aquí es solo de la hoja: no cambia lo que hace el bot.</p>
+    <label for="l-negocio">Empresa</label><input id="l-negocio" required>
+    <div class="dos">
+      <div><label for="l-nombre">Contacto</label><input id="l-nombre"></div>
+      <div><label for="l-telefono">Teléfono</label><input id="l-telefono" inputmode="tel"></div>
+    </div>
+    <div class="dos">
+      <div><label for="l-ciudad">Ciudad</label><input id="l-ciudad"></div>
+      <div><label for="l-fecha">Fecha de contacto</label><input id="l-fecha" type="datetime-local"></div>
+    </div>
+    <div class="dos">
+      <div><label for="l-interes">Interés</label>
+        <select id="l-interes"><option value="">Automático (lo que diga el vigía)</option><option value="interesado">🔥 Interesado</option><option value="pregunta">❓ Pregunta</option><option value="cortesía">🙂 Cortesía</option><option value="no">✖ No interesa</option><option value="automática">🤖 Automática</option></select></div>
+      <div><label for="l-booked">Booked (llamada)</label><input id="l-booked" placeholder="2026-11-25 o sí"></div>
+    </div>
+    <label for="l-desc">Not interested (motivo)</label><input id="l-desc">
+    <label for="l-resp">Respuesta</label><textarea id="l-resp"></textarea>
+    <label>Marcas X (Automático = lo que diga el bot)</label>
+    <div class="dos">
+      <div><select id="l-x-inicial"><option value="">Inicial: automático</option><option value="si">Inicial: con X</option><option value="no">Inicial: sin X</option></select></div>
+      <div><select id="l-x-f1"><option value="">F Up 1: automático</option><option value="si">F Up 1: con X</option><option value="no">F Up 1: sin X</option></select></div>
+      <div><select id="l-x-f2"><option value="">F Up 2: automático</option><option value="si">F Up 2: con X</option><option value="no">F Up 2: sin X</option></select></div>
+      <div><select id="l-x-f3"><option value="">F Up 3: automático</option><option value="si">F Up 3: con X</option><option value="no">F Up 3: sin X</option></select></div>
+    </div>
+    <div class="error" id="e-lead"></div>
+    <div class="acciones">
+      <button class="boton" type="button" id="l-borrar">Quitar de la hoja</button>
+      <div style="flex:1"></div>
+      <button class="boton" type="button" id="l-cancelar">Cancelar</button>
+      <button class="boton prim" type="submit">Guardar</button>
+    </div>
+  </form>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
 // Datos: Supabase del panel de Widy con la sesión de Darío (la clave «anon» es pública; protege el RLS).
@@ -358,7 +404,10 @@ const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const num = (n) => new Intl.NumberFormat("es-ES").format(n || 0);
 const fecha = (s) => { if (!s) return ""; const d = new Date(String(s).replace(" ", "T")); return isNaN(d) ? esc(s) : d.toLocaleDateString("es-ES", {day:"numeric", month:"short"}) + (String(s).length > 10 ? " " + d.toLocaleTimeString("es-ES", {hour:"2-digit", minute:"2-digit"}) : ""); };
+const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
+const claveDe = (r) => { const t = String(r.telefono || "").replace(/\D/g, "").slice(-9); return t.length >= 9 ? t : "n:" + norm(r.negocio); };
 let DATOS = null, CLIENTES = [], FILTRO = "todos", EDITANDO = -1;
+let HOJA = {ajustes: {}, nuevos: [], borrados: []}; // ediciones, leads añadidos y leads quitados de la hoja (hoja.json en el almacén)
 
 const REALES = new Set(["interesado", "pregunta", "no", "cortesía"]);
 const UTILES = new Set(["interesado", "pregunta"]);
@@ -384,7 +433,7 @@ async function cargar() {
   if (!session) { $("#login").hidden = false; $("#correo").focus(); return; }
   $("#act").textContent = "Cargando…";
   try {
-    const [tracker, cli, leads, reus] = await Promise.all([
+    const [tracker, cli, leads, reus, hojaJ] = await Promise.all([
       leerJson("tracker.json", {filas: []}),
       leerJson("clientes.json", {clientes: []}),
       sb.from("leads").select("id,company_name,contact_name,contact_phone,stage,next_followup_at,notas,updated_at,created_at")
@@ -392,6 +441,7 @@ async function cargar() {
         .order("updated_at", {ascending: false}).limit(600),
       sb.from("meetings").select("id,titulo,fecha,hora_inicio,tipo,lead_id,client_id,status")
         .eq("organization_id", ORG).gte("fecha", hace(0)).order("fecha").order("hora_inicio").limit(40),
+      leerJson("hoja.json", {}),
     ]);
     if (leads.error) throw leads.error;
     const filas = tracker.filas || [], ls = leads.data || [], ids = new Set(ls.map((l) => l.id));
@@ -417,8 +467,8 @@ async function cargar() {
       // 22-nov (Darío): «deja todos los concesionarios que teníamos apuntados»: los del CRM que no salen en el tracker del 642
       // (tandas anteriores) también están en la hoja. Solo se ven ahí: no cuentan en las métricas de arriba.
       antiguas: (() => {
-        const t9 = (s) => String(s || "").replace(/\D/g, "").slice(-9), vistos = new Set(filas.map((r) => t9(r.telefono)));
-        return ls.filter((l) => l.contact_phone && !vistos.has(t9(l.contact_phone))).map((l) => ({
+        const t9 = (s) => String(s || "").replace(/\D/g, "").slice(-9), vistos = new Set(filas.map((r) => t9(r.telefono))), nombres = new Set(filas.map((r) => norm(r.negocio)));
+        return ls.filter((l) => t9(l.contact_phone).length >= 9 ? !vistos.has(t9(l.contact_phone)) : !nombres.has(norm(l.company_name))).map((l) => ({
           negocio: l.company_name || "", nombre: l.contact_name || "", telefono: t9(l.contact_phone), ciudad: "",
           fecha_inicial: String(l.created_at || "").replace("T", " ").slice(0, 16), plantilla: "tanda anterior (CRM)", variante: "",
           sin_inicial: l.stage === "lead", antiguo: true,
@@ -429,6 +479,7 @@ async function cargar() {
       contestaEn: filas.filter((r) => REALES.has(r.tipo_respuesta)).reduce((o, r) => (o[r.contesto_en || "?"] = (o[r.contesto_en || "?"] || 0) + 1, o), {}),
     };
     CLIENTES = cli.clientes || [];
+    HOJA = {ajustes: hojaJ.ajustes || {}, nuevos: hojaJ.nuevos || [], borrados: hojaJ.borrados || []};
     pintar();
   } catch (e) { $("#act").textContent = "Error: " + (e.message || e); }
 }
@@ -533,59 +584,78 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape") $("#modal"
 
 // ---- Hoja de cálculo: las columnas del tracker del curso (+ respuesta y automática al final)
 const MESES = ["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO","JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"];
-let MES = null;
+let MES = null, EDIT_K = null;
 const corta = (s) => s ? String(s).slice(8, 10) + "/" + String(s).slice(5, 7) : "";
 const tel = (t) => String(t || "").replace(/^34(?=\d{9}$)/, "").replace(/(\d{3})(\d{3})(\d{3})$/, "$1 $2 $3");
 const toque = (r, k) => r.contesto_en === k ? " 💬" : "";
-const INICIO_SEG = "2026-11-23"; // los seguimientos F1-F4 cuentan desde el lunes 23-nov
+const INICIO_SEG = "2026-11-23"; // los seguimientos F1-F3 cuentan desde el lunes 23-nov
 const sinSeg = (r) => (r.fecha_inicial || "") < INICIO_SEG;
 // 22-nov (Darío): cada mensaje que sale se marca con una X (la pone el bot al enviarlo; la fecha sale al pasar el ratón).
 // Mensaje 1 = inicial · mensaje 2, 3 y 4 = F Up 1, 2 y 3 (cada 2 días, sin ser pesados: se paran en cuanto contesta).
-const fup = (r, n) => sinSeg(r) ? (toque(r, "F" + n) ? "X 💬" : "—") : (r["fup" + n] ? "X" : "") + toque(r, "F" + n);
-const fupTip = (r, n) => r["fup" + n] ? "Enviado el " + corta(r["fup" + n]) + " a las " + String(r["fup" + n]).slice(11, 16) : (sinSeg(r) ? "Lead anterior al 23-nov: sin seguimiento automático" : "Aún no ha salido");
+// Las X se pueden forzar a mano al editar un lead (x_inicial, x_f1…: "si" / "no"; vacío = lo que diga el bot).
+const fup = (r, n) => {
+  const o = r["x_f" + n]; if (o === "no") return ""; if (o === "si") return "X" + toque(r, "F" + n);
+  return sinSeg(r) ? (toque(r, "F" + n) ? "X 💬" : "—") : (r["fup" + n] ? "X" : "") + toque(r, "F" + n);
+};
+const fupTip = (r, n) => r["x_f" + n] ? "Marcado a mano" : r["fup" + n] ? "Enviado el " + corta(r["fup" + n]) + " a las " + String(r["fup" + n]).slice(11, 16) : (sinSeg(r) ? "Lead anterior al 23-nov: sin seguimiento automático" : "Aún no ha salido");
+const inicial = (r) => { const o = r.x_inicial; if (o === "no") return ""; if (o !== "si" && r.sin_inicial) return ""; return "X" + (r.variante ? " · " + r.variante : "") + toque(r, "inicial"); };
+// interés: lo que ha dicho el lead (tipo_respuesta del vigía) o lo que Darío marque a mano
+const tipoDe = (r) => r.interes || r.tipo_respuesta || (/🔥/.test(r.texto_respuesta || "") ? "interesado" : "") || ((r.automatica || r.texto_automatica) ? "automática" : "");
+const esInteres = (r) => ["interesado", "pregunta"].includes(tipoDe(r));
+const ETQ = {interesado: "🔥 Interesado", pregunta: "❓ Pregunta", "cortesía": "🙂 Cortesía", no: "✖ No interesa", "automática": "🤖 Automática"};
+function todasFilas() {
+  const borr = new Set(HOJA.borrados || []);
+  return [...(DATOS.filas || []), ...(DATOS.antiguas || []), ...(HOJA.nuevos || [])]
+    .map((r) => { const k = r.key || claveDe(r); return {...r, ...((HOJA.ajustes || {})[k] || {}), key: k}; })
+    .filter((r) => !borr.has(r.key));
+}
 const COLS = [
   ["LEAD (NOMBRE EMPRESA)", "am", (r) => r.negocio + (r.nombre ? " · " + r.nombre : "")],
   ["TELÉFONO", "am", (r) => tel(r.telefono)],
   ["FECHA DE CONTACTO", "am", (r) => r.fecha_inicial ? corta(r.fecha_inicial) + " " + String(r.fecha_inicial).slice(11, 16) : ""],
-  ["MENSAJE INICIAL", "am", (r) => r.sin_inicial ? "" : "X" + (r.variante ? " · " + r.variante : "") + toque(r, "inicial"), (r) => (r.plantilla || "mensaje inicial").replace("heynora-", "") + (r.variante ? " · variante " + r.variante : "")],
+  ["MENSAJE INICIAL", "am", (r) => inicial(r), (r) => r.x_inicial ? "Marcado a mano" : (r.plantilla || "mensaje inicial").replace("heynora-", "") + (r.variante ? " · variante " + r.variante : "")],
   ["F Up 1 (mensaje 2)", "am", (r) => fup(r, 1), (r) => fupTip(r, 1)],
   ["F Up 2 (mensaje 3)", "am", (r) => fup(r, 2), (r) => fupTip(r, 2)],
   ["F Up 3 (mensaje 4)", "am", (r) => fup(r, 3), (r) => fupTip(r, 3)],
   ["RETARGETING", "na", (r) => ""],
   ["BOOKED", "ve", (r) => r.llamada_agendada ? "✓ " + (/^\d{4}-/.test(r.llamada_agendada) ? corta(r.llamada_agendada) : "") : ""],
   ["NOT INTERESTED", "ro", (r) => r.descarte || ""],
+  ["INTERÉS", "gr", (r) => ETQ[tipoDe(r)] || ""],
   ["RESPUESTA", "gr", (r) => r.texto_respuesta || ""],
   ["AUTOMÁTICA", "gr", (r) => r.texto_automatica ? "🤖 " + r.texto_automatica : ""],
 ];
 const letra = (i) => String.fromCharCode(65 + i);
 function filasHoja() {
   const q = ($("#buscar").value || "").toLowerCase().trim();
-  return [...(DATOS.filas || []), ...(DATOS.antiguas || [])].filter((r) => (MES === "TODOS" || (MES === "SEG" ? !sinSeg(r) : (r.fecha_inicial || "").slice(0, 7) === MES)))
+  return todasFilas().filter((r) => (MES === "TODOS" || (MES === "INT" ? esInteres(r) : MES === "SEG" ? !sinSeg(r) : (r.fecha_inicial || "").slice(0, 7) === MES)))
     .filter((r) => !q || [r.negocio, r.nombre, r.ciudad, r.telefono].join(" ").toLowerCase().includes(q))
-    .sort((a, b) => (a.fecha_inicial || "").localeCompare(b.fecha_inicial || ""));
+    .sort((a, b) => (esInteres(b) - esInteres(a)) || (a.fecha_inicial || "").localeCompare(b.fecha_inicial || ""));
 }
 function hoja() {
-  const filas = [...(DATOS.filas || []), ...(DATOS.antiguas || [])];
+  const filas = todasFilas();
   const meses = [...new Set(filas.map((r) => (r.fecha_inicial || "").slice(0, 7)).filter(Boolean))].sort();
-  const nSeg = filas.filter((r) => !sinSeg(r)).length;
+  const nSeg = filas.filter((r) => !sinSeg(r)).length, nInt = filas.filter(esInteres).length;
   if (!MES) MES = "TODOS"; // se abre con todos los concesionarios apuntados
-  if (MES !== "TODOS" && MES !== "SEG" && !meses.includes(MES)) MES = meses[meses.length - 1] || "TODOS";
-  $("#pestanas").innerHTML = ["SEG", "TODOS", ...meses].map((m) => {
-    const n = m === "TODOS" ? filas.length : m === "SEG" ? nSeg : filas.filter((r) => (r.fecha_inicial || "").startsWith(m)).length;
-    const nombre = m === "TODOS" ? "TODOS" : m === "SEG" ? "CON SEGUIMIENTO (desde 23-nov)" : MESES[+m.slice(5, 7) - 1] + " " + m.slice(0, 4);
+  if (!["TODOS", "SEG", "INT"].includes(MES) && !meses.includes(MES)) MES = meses[meses.length - 1] || "TODOS";
+  $("#pestanas").innerHTML = ["INT", "SEG", "TODOS", ...meses].map((m) => {
+    const n = m === "TODOS" ? filas.length : m === "INT" ? nInt : m === "SEG" ? nSeg : filas.filter((r) => (r.fecha_inicial || "").startsWith(m)).length;
+    const nombre = m === "TODOS" ? "TODOS" : m === "INT" ? "🔥 CON INTERÉS" : m === "SEG" ? "CON SEGUIMIENTO (desde 23-nov)" : MESES[+m.slice(5, 7) - 1] + " " + m.slice(0, 4);
     return `<button role="tab" aria-selected="${m === MES}" class="${m === MES ? "activo" : ""}" data-m="${m}">${nombre}<small>${n}</small></button>`;
   }).join("");
   document.querySelectorAll("#pestanas button").forEach((b) => b.onclick = () => { MES = b.dataset.m; hoja(); });
+  const nq = (HOJA.borrados || []).length;
+  $("#restaurar").hidden = !nq; $("#restaurar").textContent = `↺ Restaurar quitados (${nq})`;
   const ver = filasHoja();
   $("#hoja-sub").textContent = `Hey Nora · concesionarios · ${ver.length} leads`;
   let h = `<thead><tr class="letras"><th class="num"></th>${COLS.map((_, i) => `<th>${letra(i)}</th>`).join("")}</tr>` +
     `<tr class="cabecera"><th class="num">1</th>${COLS.map(([t, c]) => `<th class="c-${c}">${t}</th>`).join("")}</tr></thead><tbody>`;
-  h += ver.map((r, i) => `<tr><td class="num">${i + 2}</td>${COLS.map(([t, c, f, tip], j) => {
-    const v = f(r) || "", cls = `c-${c}${j === 0 ? " lead" : ""}${c === "ve" && v ? " marca-ok" : ""}${c === "ro" && v ? " marca-no" : ""}${/^X/.test(v) ? " x-ok" : ""}`;
+  h += ver.map((r, i) => `<tr class="${esInteres(r) ? "interes" : ""}"><td class="num">${i + 2}<button class="lapiz" data-k="${esc(r.key)}" title="Editar o quitar este lead" aria-label="Editar">✎</button></td>${COLS.map(([t, c, f, tip], j) => {
+    const v = f(r) || "", cls = `c-${c}${j === 0 ? " lead" : ""}${c === "ve" && v ? " marca-ok" : ""}${c === "ro" && v ? " marca-no" : ""}${/^X/.test(v) ? " x-ok" : ""}${t === "RESPUESTA" || t === "AUTOMÁTICA" ? " resp" : ""}`;
     return `<td class="${cls}" title="${esc(tip ? tip(r) : v)}">${esc(v)}</td>`;
   }).join("")}</tr>`).join("");
   if (!ver.length) h += `<tr><td class="num">2</td><td class="c-am" colspan="${COLS.length}">Sin leads en esta pestaña.</td></tr>`;
   $("#hoja").innerHTML = h + "</tbody>";
+  document.querySelectorAll("#hoja .lapiz").forEach((b) => b.onclick = () => abrirLead(b.dataset.k));
 }
 $("#buscar").oninput = () => DATOS && hoja();
 $("#csv").onclick = () => {
@@ -593,8 +663,55 @@ $("#csv").onclick = () => {
     .map((fila) => fila.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(";"));
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob(["﻿" + lineas.join("\n")], {type: "text/csv;charset=utf-8"}));
-  a.download = `tracker-heynora-${MES === "TODOS" ? "todo" : MES === "SEG" ? "desde-23nov" : MES}.csv`; a.click(); URL.revokeObjectURL(a.href);
+  a.download = `tracker-heynora-${MES === "TODOS" ? "todo" : MES === "INT" ? "con-interes" : MES === "SEG" ? "desde-23nov" : MES}.csv`; a.click(); URL.revokeObjectURL(a.href);
 };
+
+// ---- Editar, añadir y quitar leads de la hoja (se guarda en hoja.json del almacén; el bot no se entera)
+async function guardarHoja(h) {
+  const cuerpo = new Blob([JSON.stringify({actualizado: new Date().toISOString(), ...h})], {type: "application/json"});
+  const {error} = await ALMACEN.upload("hoja.json", cuerpo, {upsert: true, cacheControl: "0", contentType: "application/json"});
+  if (error) throw new Error("No se pudo guardar: " + error.message);
+  HOJA = h; hoja();
+}
+const LTXT = {negocio: "l-negocio", nombre: "l-nombre", telefono: "l-telefono", ciudad: "l-ciudad", texto_respuesta: "l-resp", llamada_agendada: "l-booked", descarte: "l-desc"};
+function abrirLead(k) {
+  EDIT_K = k; const r = k ? todasFilas().find((x) => x.key === k) : null;
+  $("#l-titulo").textContent = r ? r.negocio : "Añadir lead";
+  for (const [c, id] of Object.entries(LTXT)) $("#" + id).value = r ? (r[c] || "") : "";
+  $("#l-fecha").value = r ? String(r.fecha_inicial || "").replace(" ", "T").slice(0, 16) : new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  $("#l-interes").value = r ? (r.interes || "") : "";
+  for (const x of ["inicial", "f1", "f2", "f3"]) $("#l-x-" + x).value = r ? (r["x_" + x] || "") : (x === "inicial" ? "si" : "");
+  $("#l-borrar").hidden = !r; $("#e-lead").textContent = "";
+  $("#modal-lead").hidden = false; $("#l-negocio").focus();
+}
+$("#nuevo-lead").onclick = () => abrirLead(null);
+$("#f-lead").onsubmit = async (e) => {
+  e.preventDefault();
+  const c = {};
+  for (const [campo, id] of Object.entries(LTXT)) c[campo] = $("#" + id).value.trim();
+  c.fecha_inicial = $("#l-fecha").value ? $("#l-fecha").value.replace("T", " ") : "";
+  c.interes = $("#l-interes").value;
+  for (const x of ["inicial", "f1", "f2", "f3"]) c["x_" + x] = $("#l-x-" + x).value;
+  const h = {ajustes: {...HOJA.ajustes}, nuevos: [...HOJA.nuevos], borrados: [...HOJA.borrados]};
+  if (!EDIT_K) { const k = "nuevo-" + Date.now(); h.nuevos.push({key: k, ...c, plantilla: "añadido a mano", variante: "", sin_inicial: true}); }
+  else if (h.nuevos.some((n) => n.key === EDIT_K)) h.nuevos = h.nuevos.map((n) => n.key === EDIT_K ? {...n, ...c} : n);
+  else h.ajustes[EDIT_K] = {...(h.ajustes[EDIT_K] || {}), ...c};
+  try { await guardarHoja(h); $("#modal-lead").hidden = true; } catch (err) { $("#e-lead").textContent = err.message; }
+};
+$("#l-borrar").onclick = async () => {
+  if (!EDIT_K || !confirm("¿Quitar este lead de la hoja?\n\nSolo se quita de la hoja (se puede restaurar). El bot no se entera: si no quieres que le escriba más, dímelo.")) return;
+  const h = {ajustes: {...HOJA.ajustes}, nuevos: HOJA.nuevos.filter((n) => n.key !== EDIT_K), borrados: [...HOJA.borrados]};
+  if (!HOJA.nuevos.some((n) => n.key === EDIT_K)) h.borrados.push(EDIT_K);
+  delete h.ajustes[EDIT_K];
+  try { await guardarHoja(h); $("#modal-lead").hidden = true; } catch (err) { $("#e-lead").textContent = err.message; }
+};
+$("#restaurar").onclick = async () => {
+  if (!confirm("¿Volver a poner en la hoja los leads que quitaste?")) return;
+  try { await guardarHoja({ajustes: HOJA.ajustes, nuevos: HOJA.nuevos, borrados: []}); } catch (err) { alert(err.message); }
+};
+$("#l-cancelar").onclick = () => $("#modal-lead").hidden = true;
+$("#modal-lead").onclick = (e) => { if (e.target.id === "modal-lead") $("#modal-lead").hidden = true; };
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") $("#modal-lead").hidden = true; });
 
 // ---- Menú: cada sección es una vista (#inicio, #hoja, #clientes, #llamadas, #funciona)
 const TITULOS = {inicio: "Inicio", hoja: "Hoja de seguimiento", clientes: "Clientes", llamadas: "Llamadas", funciona: "Qué funciona"};
