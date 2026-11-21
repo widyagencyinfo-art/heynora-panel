@@ -437,7 +437,7 @@ async function cargar() {
       leerJson("tracker.json", {filas: []}),
       leerJson("clientes.json", {clientes: []}),
       sb.from("leads").select("id,company_name,contact_name,contact_phone,stage,next_followup_at,notas,updated_at,created_at")
-        .eq("organization_id", ORG).or("sector.eq.concesionario,source.ilike.*heynora*,source.ilike.*642*")
+        .eq("organization_id", ORG).or("source.ilike.*heynora*,source.ilike.*642*") // 22-nov (Darío): solo los leads de WhatsApp de Hey Nora; Digi, Instagram y llamadas antiguas fuera
         .order("updated_at", {ascending: false}).limit(600),
       sb.from("meetings").select("id,titulo,fecha,hora_inicio,tipo,lead_id,client_id,status")
         .eq("organization_id", ORG).gte("fecha", hace(0)).order("fecha").order("hora_inicio").limit(40),
