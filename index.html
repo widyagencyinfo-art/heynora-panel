@@ -387,9 +387,9 @@ async function cargar() {
     const [tracker, cli, leads, reus] = await Promise.all([
       leerJson("tracker.json", {filas: []}),
       leerJson("clientes.json", {clientes: []}),
-      sb.from("leads").select("id,company_name,contact_phone,stage,next_followup_at,notas,updated_at")
+      sb.from("leads").select("id,company_name,contact_name,contact_phone,stage,next_followup_at,notas,updated_at,created_at")
         .eq("organization_id", ORG).or("sector.eq.concesionario,source.ilike.*heynora*,source.ilike.*642*")
-        .order("updated_at", {ascending: false}).limit(300),
+        .order("updated_at", {ascending: false}).limit(600),
       sb.from("meetings").select("id,titulo,fecha,hora_inicio,tipo,lead_id,client_id,status")
         .eq("organization_id", ORG).gte("fecha", hace(0)).order("fecha").order("hora_inicio").limit(40),
     ]);
@@ -414,6 +414,18 @@ async function cargar() {
         .map((l) => ({empresa: l.company_name, cuando: l.next_followup_at, ultima: arriba(l).slice(0, 160)})),
       reuniones: (reus.data || []).filter((m) => (m.lead_id && ids.has(m.lead_id)) || (!m.lead_id && /conce|motor|auto|coche|moto|nora/i.test(m.titulo || ""))),
       filas,
+      // 22-nov (Darío): «deja todos los concesionarios que teníamos apuntados»: los del CRM que no salen en el tracker del 642
+      // (tandas anteriores) también están en la hoja. Solo se ven ahí: no cuentan en las métricas de arriba.
+      antiguas: (() => {
+        const t9 = (s) => String(s || "").replace(/\D/g, "").slice(-9), vistos = new Set(filas.map((r) => t9(r.telefono)));
+        return ls.filter((l) => l.contact_phone && !vistos.has(t9(l.contact_phone))).map((l) => ({
+          negocio: l.company_name || "", nombre: l.contact_name || "", telefono: t9(l.contact_phone), ciudad: "",
+          fecha_inicial: String(l.created_at || "").replace("T", " ").slice(0, 16), plantilla: "tanda anterior (CRM)", variante: "",
+          sin_inicial: l.stage === "lead", antiguo: true,
+          llamada_agendada: l.stage === "llamada_agendada" ? (l.next_followup_at || "sí") : "",
+          descarte: l.stage === "cerrado_perdido" ? "cerrado" : "", texto_respuesta: arriba(l).slice(0, 140),
+        }));
+      })(),
       contestaEn: filas.filter((r) => REALES.has(r.tipo_respuesta)).reduce((o, r) => (o[r.contesto_en || "?"] = (o[r.contesto_en || "?"] || 0) + 1, o), {}),
     };
     CLIENTES = cli.clientes || [];
@@ -535,7 +547,7 @@ const COLS = [
   ["LEAD (NOMBRE EMPRESA)", "am", (r) => r.negocio + (r.nombre ? " · " + r.nombre : "")],
   ["TELÉFONO", "am", (r) => tel(r.telefono)],
   ["FECHA DE CONTACTO", "am", (r) => r.fecha_inicial ? corta(r.fecha_inicial) + " " + String(r.fecha_inicial).slice(11, 16) : ""],
-  ["MENSAJE INICIAL", "am", (r) => "X" + (r.variante ? " · " + r.variante : "") + toque(r, "inicial"), (r) => (r.plantilla || "mensaje inicial").replace("heynora-", "") + (r.variante ? " · variante " + r.variante : "")],
+  ["MENSAJE INICIAL", "am", (r) => r.sin_inicial ? "" : "X" + (r.variante ? " · " + r.variante : "") + toque(r, "inicial"), (r) => (r.plantilla || "mensaje inicial").replace("heynora-", "") + (r.variante ? " · variante " + r.variante : "")],
   ["F Up 1 (mensaje 2)", "am", (r) => fup(r, 1), (r) => fupTip(r, 1)],
   ["F Up 2 (mensaje 3)", "am", (r) => fup(r, 2), (r) => fupTip(r, 2)],
   ["F Up 3 (mensaje 4)", "am", (r) => fup(r, 3), (r) => fupTip(r, 3)],
@@ -548,15 +560,15 @@ const COLS = [
 const letra = (i) => String.fromCharCode(65 + i);
 function filasHoja() {
   const q = ($("#buscar").value || "").toLowerCase().trim();
-  return (DATOS.filas || []).filter((r) => (MES === "TODOS" || (MES === "SEG" ? !sinSeg(r) : (r.fecha_inicial || "").slice(0, 7) === MES)))
+  return [...(DATOS.filas || []), ...(DATOS.antiguas || [])].filter((r) => (MES === "TODOS" || (MES === "SEG" ? !sinSeg(r) : (r.fecha_inicial || "").slice(0, 7) === MES)))
     .filter((r) => !q || [r.negocio, r.nombre, r.ciudad, r.telefono].join(" ").toLowerCase().includes(q))
     .sort((a, b) => (a.fecha_inicial || "").localeCompare(b.fecha_inicial || ""));
 }
 function hoja() {
-  const filas = DATOS.filas || [];
+  const filas = [...(DATOS.filas || []), ...(DATOS.antiguas || [])];
   const meses = [...new Set(filas.map((r) => (r.fecha_inicial || "").slice(0, 7)).filter(Boolean))].sort();
   const nSeg = filas.filter((r) => !sinSeg(r)).length;
-  if (!MES) MES = nSeg ? "SEG" : (meses[meses.length - 1] || "TODOS");
+  if (!MES) MES = "TODOS"; // se abre con todos los concesionarios apuntados
   if (MES !== "TODOS" && MES !== "SEG" && !meses.includes(MES)) MES = meses[meses.length - 1] || "TODOS";
   $("#pestanas").innerHTML = ["SEG", "TODOS", ...meses].map((m) => {
     const n = m === "TODOS" ? filas.length : m === "SEG" ? nSeg : filas.filter((r) => (r.fecha_inicial || "").startsWith(m)).length;
@@ -565,7 +577,7 @@ function hoja() {
   }).join("");
   document.querySelectorAll("#pestanas button").forEach((b) => b.onclick = () => { MES = b.dataset.m; hoja(); });
   const ver = filasHoja();
-  $("#hoja-sub").textContent = `Hey Nora · 642 · ${ver.length} leads`;
+  $("#hoja-sub").textContent = `Hey Nora · concesionarios · ${ver.length} leads`;
   let h = `<thead><tr class="letras"><th class="num"></th>${COLS.map((_, i) => `<th>${letra(i)}</th>`).join("")}</tr>` +
     `<tr class="cabecera"><th class="num">1</th>${COLS.map(([t, c]) => `<th class="c-${c}">${t}</th>`).join("")}</tr></thead><tbody>`;
   h += ver.map((r, i) => `<tr><td class="num">${i + 2}</td>${COLS.map(([t, c, f, tip], j) => {
