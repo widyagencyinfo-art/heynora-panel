@@ -641,7 +641,7 @@ function todasFilas() {
     .filter((r) => !borr.has(r.key));
 }
 const COLS = [
-  ["LEAD (NOMBRE EMPRESA)", "am", (r) => r.negocio + (r.nombre ? " · " + r.nombre : "")],
+  ["LEAD (NOMBRE EMPRESA)", "am", (r) => (esPorContestar(r) ? "🔥 " : "") + r.negocio + (r.nombre ? " · " + r.nombre : "")],
   ["TELÉFONO", "am", (r) => tel(r.telefono)],
   ["FECHA DE CONTACTO", "am", (r) => r.fecha_inicial ? corta(r.fecha_inicial) + " " + String(r.fecha_inicial).slice(11, 16) : ""],
   ["MENSAJE INICIAL", "am", (r) => r.o_inicial !== undefined ? r.o_inicial : inicial(r), (r) => r.x_inicial ? "Marcado a mano" : (r.plantilla || "mensaje inicial").replace("heynora-", "") + (r.variante ? " · variante " + r.variante : "")],
@@ -665,7 +665,7 @@ const parseFecha = (v, k) => {
   return `${y}-${z(m[2])}-${z(m[1])} ${z(m[4] || 0)}:${m[5] || "00"}`;
 };
 const EDITA = [
-  {c: "negocio", extra: {nombre: ""}}, {c: "telefono", norm: (v) => v.replace(/\D/g, "")}, {c: "fecha_inicial", norm: parseFecha},
+  {c: "negocio", extra: {nombre: ""}, norm: (v) => v.replace(/^🔥\s*/, "")}, {c: "telefono", norm: (v) => v.replace(/\D/g, "")}, {c: "fecha_inicial", norm: parseFecha},
   {c: "o_inicial"}, {c: "o_f1"}, {c: "o_f2"}, {c: "o_f3"}, {c: "retargeting"}, {c: "o_booked"}, {c: "descarte"},
   {c: "interes", select: true}, {c: "texto_respuesta"}, {c: "texto_automatica", norm: (v) => v.replace(/^🤖\s*/, "")},
 ];
@@ -673,7 +673,19 @@ function filasHoja() {
   const q = ($("#buscar").value || "").toLowerCase().trim();
   return todasFilas().filter((r) => (MES === "TODOS" || (MES === "INT" ? esInteres(r) : MES === "SEG" ? !sinSeg(r) : (r.fecha_inicial || "").slice(0, 7) === MES)))
     .filter((r) => !q || [r.negocio, r.nombre, r.ciudad, r.telefono].join(" ").toLowerCase().includes(q))
-    .sort((a, b) => (esInteres(b) - esInteres(a)) || (a.fecha_inicial || "").localeCompare(b.fecha_inicial || ""));
+    .sort(porPrioridad);
+}
+// 22-nov (Darío): «un buen orden da más resultados». Arriba lo que hay que hacer ya, abajo lo que no:
+//  0 🔥 por contestar (han escrito y nadie les ha contestado; el que lleva más esperando, primero)
+//  1 llamada agendada · 2 con interés (templados…) · 3 han contestado otra cosa · 4 sin respuesta (el más reciente primero) · 5 dijeron que no
+const t9 = (s) => String(s || "").replace(/\D/g, "").slice(-9);
+const esPorContestar = (r) => (DATOS.calientes || []).some((c) => t9(c.tel) === t9(r.telefono) && t9(r.telefono));
+const nivel = (r) => esPorContestar(r) ? 0 : r.llamada_agendada ? 1 : esInteres(r) ? 2
+  : (tipoDe(r) === "no" || /no interesa|cerrado/i.test(r.descarte || "")) ? 5 : (r.fecha_respuesta && tipoDe(r) !== "automática") ? 3 : 4;
+function porPrioridad(a, b) {
+  const na = nivel(a), nb = nivel(b); if (na !== nb) return na - nb;
+  const ra = a.fecha_respuesta || a.fecha_inicial || "", rb = b.fecha_respuesta || b.fecha_inicial || "";
+  return na === 0 ? ra.localeCompare(rb) : rb.localeCompare(ra);
 }
 function hoja() {
   const filas = todasFilas();
