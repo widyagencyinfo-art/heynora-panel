@@ -860,13 +860,13 @@ function leadsCalientes() {
   const ps = [...(DATOS.pendientes || [])].sort((a, b) => String(a.cuando || "9").localeCompare(String(b.cuando || "9")));
   const acc = (l, botones) => `<div class="cl-acc">${waLink(l.tel) ? `<a class="boton" href="${waLink(l.tel)}" target="_blank" rel="noopener">Abrir WhatsApp</a>` : ""}${botones}</div>`;
   $("#cal-contestar").innerHTML = cs.map((l) => `<div class="item cl" data-id="${esc(l.id)}"><div class="cl-cab"><b>${esc(l.empresa)}</b><span class="etiqueta">${esc(tel(l.tel))}</span><span class="cl-t rojo">esperando desde hace ${cuantoHace(l.cuando)}</span></div><p>${esc(l.ultima)}</p>` +
-    acc(l, `<button class="boton" data-a="hecho">✅ Ya contestado</button><button class="boton" data-a="pend">🟡 Dejar para otro día</button>`) + `</div>`).join("") || `<div class="vacio">Nadie esperando tu respuesta. 🎉</div>`;
+    acc(l, `<button class="boton" data-a="hecho">✅ Ya contestado</button><button class="boton" data-a="pend">🟡 Dejar para otro día</button><button class="boton" data-a="borrar">🗑 Borrar</button>`) + `</div>`).join("") || `<div class="vacio">Nadie esperando tu respuesta. 🎉</div>`;
   $("#cal-pend").innerHTML = ps.map((l) => {
     let cu = "", rojo = "";
     if (l.cuando) { const d = new Date(ymd(new Date(l.cuando)) + "T12:00:00"), n = Math.round((d - hoyD) / 86400000);
       cu = n < 0 ? "vencido hace " + (-n) + " d" : n === 0 ? "toca hoy" : n === 1 ? "toca mañana" : "toca el " + diaLargo(ymd(d)); rojo = n <= 0 ? " rojo" : ""; }
     return `<div class="item cl" data-id="${esc(l.id)}"><div class="cl-cab"><b>${esc(l.empresa)}</b><span class="etiqueta">${esc(tel(l.tel))}</span>${cu ? `<span class="cl-t${rojo}">${cu}</span>` : ""}</div><p>${esc(l.ultima)}</p>` +
-      acc(l, `<button class="boton" data-a="hecho">✅ Hecho</button><button class="boton" data-a="pend">📅 Cambiar día o nota</button>`) + `</div>`;
+      acc(l, `<button class="boton" data-a="hecho">✅ Hecho</button><button class="boton" data-a="pend">📅 Cambiar día o nota</button><button class="boton" data-a="borrar">🗑 Borrar</button>`) + `</div>`;
   }).join("") || `<div class="vacio">Ningún lead pendiente de su respuesta.</div>`;
   const n = cs.length + ps.filter((l) => l.cuando && new Date(l.cuando) <= new Date(Date.now() + 43200000)).length;
   $("#n-cal").textContent = n ? String(n) : "";
@@ -886,6 +886,13 @@ for (const caja of ["#cal-contestar", "#cal-pend"]) $(caja).addEventListener("cl
   const b = e.target.closest("button[data-a]"); if (!b) return;
   const card = b.closest(".cl"), id = card.dataset.id, nombre = card.querySelector("b").textContent;
   if (b.dataset.a === "pend") return abrirPend(id, nombre);
+  if (b.dataset.a === "borrar") {
+    if (!confirm(`¿Borrar «${nombre}» de esta lista?\n\nSolo se quita de Leads calientes. El lead y todo su historial siguen en el CRM.`)) return;
+    b.disabled = true;
+    try { await anotarLead(id, "🗑 QUITADO de Leads calientes (desde el panel)"); await cargar(); }
+    catch (err) { alert("No se pudo guardar: " + err.message); b.disabled = false; }
+    return;
+  }
   const txt = prompt("¿Qué le has dicho? (opcional)"); if (txt === null) return;
   b.disabled = true;
   try { await anotarLead(id, "✅ " + (caja === "#cal-pend" ? "SEGUIMIENTO HECHO" : "CONTESTADO") + " (desde el panel)" + (txt.trim() ? ": " + txt.trim() : "")); await cargar(); }
