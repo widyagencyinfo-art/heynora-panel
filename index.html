@@ -210,6 +210,13 @@ td.c-am.lead{background:#272a37}
 .pestanas button.activo{color:#fff;background:rgba(255,255,255,.08);border-top-color:var(--naranja)}
 .pestanas button small{color:var(--tenue);font-weight:400;margin-left:4px}
 
+.menu nav a .pastilla{margin-left:auto;background:var(--naranja);color:#fff;font:700 11px Instrument,sans-serif;border-radius:99px;padding:2px 8px}
+.menu nav a .pastilla:empty{display:none}
+.cl{display:block;cursor:default} .cl-cab{display:flex;gap:10px;align-items:center;flex-wrap:wrap} .cl-cab b{font-size:16px}
+.cl-t{margin-left:auto;font-size:12px;font-weight:600;color:var(--ambar)} .cl-t.rojo{color:var(--rojo)}
+.cl p{margin:6px 0 10px;white-space:pre-wrap;font-size:13.5px;color:var(--suave);line-height:1.45}
+.cl-acc{display:flex;gap:8px;flex-wrap:wrap} .cl-acc .boton{padding:7px 12px;font-size:13px;text-decoration:none;display:inline-block}
+.caja+.caja{margin-top:18px}
 @media (max-width:1000px){.kpis{grid-template-columns:repeat(2,1fr)}.rejilla,.tres,.dos-iguales{grid-template-columns:1fr}}
 @media (max-width:860px){
   .app{grid-template-columns:1fr}
@@ -235,6 +242,7 @@ td.c-am.lead{background:#272a37}
     <span class="etiqueta menu-sub">Panel · concesionarios</span>
     <nav aria-label="Secciones del panel">
       <a href="#inicio" data-v="inicio"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span>Inicio</span></a>
+      <a href="#calientes" data-v="calientes"><svg viewBox="0 0 24 24"><path d="M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 1-9z"/></svg><span>Leads calientes</span><b class="pastilla" id="n-cal"></b></a>
       <a href="#hoja" data-v="hoja"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M3 14h18M9 4v16M15 4v16"/></svg><span>Hoja de seguimiento</span></a>
       <a href="#clientes" data-v="clientes"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5M16 4.5a3.5 3.5 0 0 1 0 7M18.5 14.8c1.6.8 2.6 2.5 3 5.2"/></svg><span>Clientes</span></a>
       <a href="#llamadas" data-v="llamadas"><svg viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A17 17 0 0 1 4 5a1 1 0 0 1 1-1z"/></svg><span>Llamadas</span></a>
@@ -298,6 +306,18 @@ td.c-am.lead{background:#272a37}
     <!-- CLIENTES -->
     <section class="vista" data-vista="clientes" hidden>
       <div class="clientes" id="clientes"></div>
+    </section>
+
+    <!-- LEADS CALIENTES -->
+    <section class="vista" data-vista="calientes" hidden>
+      <div class="vidrio caja">
+        <h2>🔥 Por contestar <small>han escrito y nadie les ha respondido</small></h2>
+        <div class="lista larga" id="cal-contestar"></div>
+      </div>
+      <div class="vidrio caja">
+        <h2>🟡 Pendientes de su respuesta <small>«lo consulto», «te digo el martes»… para no olvidarnos</small></h2>
+        <div class="lista larga" id="cal-pend"></div>
+      </div>
     </section>
 
     <!-- LLAMADAS -->
@@ -379,6 +399,22 @@ td.c-am.lead{background:#272a37}
       <button class="boton" type="button" id="c-borrar">Quitar</button>
       <div style="flex:1"></div>
       <button class="boton" type="button" id="c-cancelar">Cancelar</button>
+      <button class="boton prim" type="submit">Guardar</button>
+    </div>
+  </form>
+</div>
+
+<!-- dejar un lead para otro día -->
+<div class="capa" id="modal-pend" hidden>
+  <form class="ventana vidrio" id="f-pend">
+    <h3 id="p-titulo">Dejar para otro día</h3>
+    <label for="p-texto">¿Qué dijo o qué estamos esperando?</label>
+    <textarea id="p-texto" required placeholder="Ej.: lo consulta con su socio y me dice el jueves"></textarea>
+    <label for="p-fecha">Recuérdamelo el día</label><input id="p-fecha" type="date" required>
+    <div class="error" id="e-pend"></div>
+    <div class="acciones">
+      <div style="flex:1"></div>
+      <button class="boton" type="button" id="p-cancelar">Cancelar</button>
       <button class="boton prim" type="submit">Guardar</button>
     </div>
   </form>
@@ -490,7 +526,9 @@ async function cargar() {
       porPlantilla: agrupar(filas, "plantilla"), porVariante: agrupar(filas, "variante"), porCumplido: agrupar(filas, "tipo_cumplido"),
       porDia: Object.values(porDia).sort((a, b) => a.dia.localeCompare(b.dia)),
       calientes: ls.filter((l) => abiertas.includes(l.stage) && arriba(l).includes("🔥"))
-        .map((l) => ({empresa: l.company_name, tel: l.contact_phone, ultima: arriba(l).slice(0, 220)})),
+        .map((l) => ({id: l.id, empresa: l.company_name, tel: l.contact_phone, ultima: arriba(l).slice(0, 260), cuando: l.updated_at})),
+      pendientes: ls.filter((l) => abiertas.includes(l.stage) && arriba(l).includes("🟡"))
+        .map((l) => ({id: l.id, empresa: l.company_name, tel: l.contact_phone, ultima: arriba(l).slice(0, 320), cuando: l.next_followup_at})),
       llamadas: ls.filter((l) => l.stage === "llamada_agendada")
         .map((l) => ({id: l.id, empresa: l.company_name, cuando: l.next_followup_at, ultima: arriba(l).slice(0, 160)})),
       reuniones: (reus.data || []).filter((m) => (m.lead_id && ids.has(m.lead_id)) || (!m.lead_id && /conce|motor|auto|coche|moto|nora/i.test(m.titulo || ""))),
@@ -527,6 +565,7 @@ function pintar() {
     kpi("Llamadas agendadas", num(t.llamadas), `${t.enviados ? (100 * t.llamadas / t.enviados).toFixed(1) : 0} por cada 100 enviados`);
   grafica(DATOS.porDia || []);
   $("#calientes").innerHTML = (DATOS.calientes || []).map((l) => `<div class="item"><b>${esc(l.empresa)}</b> <span class="etiqueta">${esc(l.tel || "")}</span><p>${esc(l.ultima)}</p></div>`).join("") || `<div class="vacio">Nadie esperando respuesta.</div>`;
+  leadsCalientes();
   CAL_EVS = eventosCal();
   const prox = CAL_EVS.filter((e) => e.fecha >= ymd(new Date()));
   $("#llamadas-inicio").innerHTML = prox.slice(0, 4).map((e) => `<div class="item"><b>${esc(e.titulo)}</b><p>${esc(diaLargo(e.fecha))}${e.hora ? " · " + e.hora : ""}${e.prov ? " · sin confirmar" : ""}</p></div>`).join("") || `<div class="vacio">Sin llamadas agendadas.</div>`;
@@ -808,6 +847,55 @@ $("#l-cancelar").onclick = () => $("#modal-lead").hidden = true;
 $("#modal-lead").onclick = (e) => { if (e.target.id === "modal-lead") $("#modal-lead").hidden = true; };
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") $("#modal-lead").hidden = true; });
 
+// ---- Leads calientes: 🔥 por contestar y 🟡 pendientes de su respuesta (se marcan en el CRM: leads.notas, primera línea)
+const waLink = (t) => { const d = String(t || "").replace(/\D/g, ""); return d ? "https://wa.me/" + (d.length === 9 ? "34" + d : d) : ""; };
+const cuantoHace = (iso) => { const m = (Date.now() - new Date(iso)) / 60000; return m < 60 ? Math.max(1, Math.round(m)) + " min" : m < 1440 ? Math.round(m / 60) + " h" : Math.round(m / 1440) + " d"; };
+const urgTexto = (s) => /lunes|martes|mi[eé]rcoles|jueves|viernes|hoy|mañana|\d{1,2}[:.]\d{2}/i.test(s || "") ? 0 : /llama/i.test(s || "") ? 1 : 2;
+function leadsCalientes() {
+  const cs = [...(DATOS.calientes || [])].sort((a, b) => (urgTexto(a.ultima) - urgTexto(b.ultima)) || String(a.cuando).localeCompare(String(b.cuando)));
+  const hoyD = new Date(ymd(new Date()) + "T12:00:00");
+  const ps = [...(DATOS.pendientes || [])].sort((a, b) => String(a.cuando || "9").localeCompare(String(b.cuando || "9")));
+  const acc = (l, botones) => `<div class="cl-acc">${waLink(l.tel) ? `<a class="boton" href="${waLink(l.tel)}" target="_blank" rel="noopener">Abrir WhatsApp</a>` : ""}${botones}</div>`;
+  $("#cal-contestar").innerHTML = cs.map((l) => `<div class="item cl" data-id="${esc(l.id)}"><div class="cl-cab"><b>${esc(l.empresa)}</b><span class="etiqueta">${esc(tel(l.tel))}</span><span class="cl-t rojo">esperando desde hace ${cuantoHace(l.cuando)}</span></div><p>${esc(l.ultima)}</p>` +
+    acc(l, `<button class="boton" data-a="hecho">✅ Ya contestado</button><button class="boton" data-a="pend">🟡 Dejar para otro día</button>`) + `</div>`).join("") || `<div class="vacio">Nadie esperando tu respuesta. 🎉</div>`;
+  $("#cal-pend").innerHTML = ps.map((l) => {
+    let cu = "", rojo = "";
+    if (l.cuando) { const d = new Date(ymd(new Date(l.cuando)) + "T12:00:00"), n = Math.round((d - hoyD) / 86400000);
+      cu = n < 0 ? "vencido hace " + (-n) + " d" : n === 0 ? "toca hoy" : n === 1 ? "toca mañana" : "toca el " + diaLargo(ymd(d)); rojo = n <= 0 ? " rojo" : ""; }
+    return `<div class="item cl" data-id="${esc(l.id)}"><div class="cl-cab"><b>${esc(l.empresa)}</b><span class="etiqueta">${esc(tel(l.tel))}</span>${cu ? `<span class="cl-t${rojo}">${cu}</span>` : ""}</div><p>${esc(l.ultima)}</p>` +
+      acc(l, `<button class="boton" data-a="hecho">✅ Hecho</button><button class="boton" data-a="pend">📅 Cambiar día o nota</button>`) + `</div>`;
+  }).join("") || `<div class="vacio">Ningún lead pendiente de su respuesta.</div>`;
+  const n = cs.length + ps.filter((l) => l.cuando && new Date(l.cuando) <= new Date(Date.now() + 43200000)).length;
+  $("#n-cal").textContent = n ? String(n) : "";
+}
+async function anotarLead(id, texto, extra = {}) {
+  const {data: g, error: e0} = await sb.from("leads").select("notas").eq("id", id).single(); if (e0) throw e0;
+  const d = new Date(), sello = `${d.getDate()}/${d.getMonth() + 1} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  const {error} = await sb.from("leads").update({notas: `${sello} · ${texto}` + (g.notas ? "\n" + g.notas : ""), updated_at: d.toISOString(), ...extra}).eq("id", id);
+  if (error) throw error;
+}
+let PEND_ID = null;
+function abrirPend(id, nombre) {
+  PEND_ID = id; $("#p-titulo").textContent = "Dejar para otro día · " + nombre; $("#p-texto").value = ""; $("#e-pend").textContent = "";
+  $("#p-fecha").value = ymd(new Date(Date.now() + 2 * 86400000)); $("#modal-pend").hidden = false; $("#p-texto").focus();
+}
+for (const caja of ["#cal-contestar", "#cal-pend"]) $(caja).addEventListener("click", async (e) => {
+  const b = e.target.closest("button[data-a]"); if (!b) return;
+  const card = b.closest(".cl"), id = card.dataset.id, nombre = card.querySelector("b").textContent;
+  if (b.dataset.a === "pend") return abrirPend(id, nombre);
+  const txt = prompt("¿Qué le has dicho? (opcional)"); if (txt === null) return;
+  b.disabled = true;
+  try { await anotarLead(id, "✅ " + (caja === "#cal-pend" ? "SEGUIMIENTO HECHO" : "CONTESTADO") + " (desde el panel)" + (txt.trim() ? ": " + txt.trim() : "")); await cargar(); }
+  catch (err) { alert("No se pudo guardar: " + err.message); b.disabled = false; }
+});
+$("#f-pend").onsubmit = async (e) => {
+  e.preventDefault();
+  try { await anotarLead(PEND_ID, "🟡 PENDIENTE DE SU RESPUESTA: " + $("#p-texto").value.trim(), {next_followup_at: new Date($("#p-fecha").value + "T09:30:00").toISOString()}); $("#modal-pend").hidden = true; await cargar(); }
+  catch (err) { $("#e-pend").textContent = "No se pudo guardar: " + err.message; }
+};
+$("#p-cancelar").onclick = () => $("#modal-pend").hidden = true;
+$("#modal-pend").onclick = (e) => { if (e.target.id === "modal-pend") $("#modal-pend").hidden = true; };
+
 // ---- Calendario de llamadas (vista Llamadas)
 let CAL = {y: null, m: null, sel: null}, CAL_EVS = [];
 const ymd = (d) => d.toLocaleDateString("en-CA");
@@ -858,7 +946,7 @@ function calendario() {
 }
 
 // ---- Menú: cada sección es una vista (#inicio, #hoja, #clientes, #llamadas, #funciona)
-const TITULOS = {inicio: "Inicio", hoja: "Hoja de seguimiento", clientes: "Clientes", llamadas: "Llamadas", funciona: "Qué funciona"};
+const TITULOS = {inicio: "Inicio", calientes: "Leads calientes", hoja: "Hoja de seguimiento", clientes: "Clientes", llamadas: "Llamadas", funciona: "Qué funciona"};
 function ir() {
   const v = (location.hash || "#inicio").slice(1);
   const vista = TITULOS[v] ? v : "inicio";
