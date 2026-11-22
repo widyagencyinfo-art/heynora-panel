@@ -217,6 +217,12 @@ td.c-am.lead{background:#272a37}
 .cl p{margin:6px 0 10px;white-space:pre-wrap;font-size:13.5px;color:var(--suave);line-height:1.45}
 .cl-acc{display:flex;gap:8px;flex-wrap:wrap} .cl-acc .boton{padding:7px 12px;font-size:13px;text-decoration:none;display:inline-block}
 .caja+.caja{margin-top:18px}
+.looms-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;margin-top:6px}
+.loom{padding:16px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);display:flex;flex-direction:column;gap:9px}
+.loom h3{font:600 16px/1.3 Instrument,sans-serif} .loom .chips{display:flex;gap:6px;flex-wrap:wrap}
+.loom .notas{font-size:13px;color:var(--suave);white-space:pre-wrap;line-height:1.45;flex:1}
+.loom .cl-acc .boton{padding:6px 11px;font-size:12.5px}
+.looms-vacio{grid-column:1/-1;padding:26px 8px;color:var(--suave);line-height:1.6;font-size:14px}
 .metricas{margin:18px 0}
 .m-cab{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
 .m-cab h2{margin:0}
@@ -261,6 +267,7 @@ td.c-am.lead{background:#272a37}
       <a href="#calientes" data-v="calientes"><svg viewBox="0 0 24 24"><path d="M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 1-9z"/></svg><span>Leads calientes</span><b class="pastilla" id="n-cal"></b></a>
       <a href="#hoja" data-v="hoja"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M3 14h18M9 4v16M15 4v16"/></svg><span>Hoja de seguimiento</span></a>
       <a href="#clientes" data-v="clientes"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5M16 4.5a3.5 3.5 0 0 1 0 7M18.5 14.8c1.6.8 2.6 2.5 3 5.2"/></svg><span>Clientes</span></a>
+      <a href="#looms" data-v="looms"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10.5l5-3v9l-5-3z"/></svg><span>Looms</span></a>
       <a href="#llamadas" data-v="llamadas"><svg viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A17 17 0 0 1 4 5a1 1 0 0 1 1-1z"/></svg><span>Llamadas</span></a>
       <a href="#funciona" data-v="funciona"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>Qué funciona</span></a>
     </nav>
@@ -345,6 +352,18 @@ td.c-am.lead{background:#272a37}
       </div>
     </section>
 
+    <!-- LOOMS -->
+    <section class="vista" data-vista="looms" hidden>
+      <div class="vidrio caja">
+        <div class="m-cab">
+          <h2>🎬 Looms <small>vídeos para mandar según el negocio con el que hablemos</small></h2>
+          <div class="m-per"><input id="loom-buscar" type="search" placeholder="Buscar loom" aria-label="Buscar loom" style="width:200px"><button class="boton prim" id="loom-nuevo" type="button" style="border-radius:99px">＋ Subir loom</button></div>
+        </div>
+        <div class="pestanas" id="loom-filtros"></div>
+        <div class="looms-grid" id="looms-lista"></div>
+      </div>
+    </section>
+
     <!-- QUÉ FUNCIONA -->
     <section class="vista" data-vista="funciona" hidden>
       <div class="tres">
@@ -419,6 +438,34 @@ td.c-am.lead{background:#272a37}
       <button class="boton prim" type="submit">Guardar</button>
     </div>
   </form>
+</div>
+
+<!-- loom: añadir / editar -->
+<div class="capa" id="modal-loom" hidden>
+  <form class="ventana vidrio" id="f-loom">
+    <h3 id="lm-titulo">Subir loom</h3>
+    <label for="lm-nombre">Título</label><input id="lm-nombre" required placeholder="Ej.: Demo para concesionarios de coches">
+    <div class="dos">
+      <div><label for="lm-negocio">Tipo de negocio</label><input id="lm-negocio" required list="lm-negocios" placeholder="Concesionario de coches"><datalist id="lm-negocios"></datalist></div>
+      <div><label for="lm-tipo">Tipo de vídeo</label><select id="lm-tipo"><option>Demo</option><option>Caso de éxito</option><option>Caso de estudio</option><option>Otro</option></select></div>
+    </div>
+    <label for="lm-url">Enlace del Loom</label><input id="lm-url" type="url" placeholder="https://www.loom.com/share/…">
+    <label for="lm-archivo">…o sube el vídeo (mp4 / mov)</label><input id="lm-archivo" type="file" accept="video/*">
+    <div id="lm-archivo-actual" style="font-size:12px;color:var(--suave);margin-top:4px"></div>
+    <label for="lm-notas">Cuándo usarlo</label><textarea id="lm-notas" placeholder="Ej.: para concesionarios que tardan en contestar; lo mando después de que digan «cuéntame más»"></textarea>
+    <label for="lm-mensaje">Mensaje para acompañarlo <small style="color:var(--tenue)">({nombre} y {enlace} se rellenan solos)</small></label>
+    <textarea id="lm-mensaje"></textarea>
+    <div class="error" id="e-loom"></div>
+    <div class="acciones">
+      <div style="flex:1"></div>
+      <button class="boton" type="button" id="lm-cancelar">Cancelar</button>
+      <button class="boton prim" type="submit" id="lm-guardar">Guardar</button>
+    </div>
+  </form>
+</div>
+<div class="capa" id="modal-video" hidden>
+  <div class="ventana vidrio" style="max-width:900px;width:100%"><h3 id="mv-titulo" style="margin-bottom:10px"></h3><video id="mv-video" controls playsinline style="width:100%;border-radius:12px;max-height:70vh;background:#000"></video>
+    <div class="acciones"><div style="flex:1"></div><button class="boton" type="button" id="mv-cerrar">Cerrar</button></div></div>
 </div>
 
 <!-- dejar un lead para otro día -->
@@ -506,8 +553,9 @@ function agrupar(filas, campo) {
   const g = {}; for (const r of filas) if (r[campo]) (g[r[campo]] ||= []).push(r);
   return Object.entries(g).map(([k, v]) => ({grupo: k, ...resumen(v)})).sort((a, b) => b.enviados - a.enviados);
 }
-async function leerJson(nombre, porDefecto) {
+async function leerJson(nombre, porDefecto, opcional = false) {
   const {data, error} = await ALMACEN.download(nombre);
+  if (error && opcional) return porDefecto;   // fichero que puede no existir aún (hoja.json, looms.json)
   if (error) { if (/not found|404/i.test(error.message || "")) return porDefecto; throw new Error("Esta cuenta no puede leer el tracker"); }
   return JSON.parse(await data.text());
 }
@@ -517,7 +565,7 @@ async function cargar() {
   if (!session) { $("#login").hidden = false; $("#correo").focus(); return; }
   $("#act").textContent = "Cargando…";
   try {
-    const [tracker, cli, leads, reus, hojaJ] = await Promise.all([
+    const [tracker, cli, leads, reus, hojaJ, loomsJ] = await Promise.all([
       leerJson("tracker.json", {filas: []}),
       leerJson("clientes.json", {clientes: []}),
       sb.from("leads").select("id,company_name,contact_name,contact_phone,stage,next_followup_at,notas,updated_at,created_at")
@@ -525,7 +573,8 @@ async function cargar() {
         .order("updated_at", {ascending: false}).limit(600),
       sb.from("meetings").select("id,titulo,descripcion,fecha,hora_inicio,hora_fin,tipo,lead_id,client_id,status,color")
         .eq("organization_id", ORG).gte("fecha", hace(70)).order("fecha").order("hora_inicio").limit(300),
-      leerJson("hoja.json", {}),
+      leerJson("hoja.json", {}, true),
+      leerJson("looms.json", {items: []}, true),
     ]);
     if (leads.error) throw leads.error;
     const filas = tracker.filas || [], ls = leads.data || [], ids = new Set(ls.map((l) => l.id));
@@ -567,6 +616,7 @@ async function cargar() {
       contestaEn: filas.filter((r) => REALES.has(r.tipo_respuesta)).reduce((o, r) => (o[r.contesto_en || "?"] = (o[r.contesto_en || "?"] || 0) + 1, o), {}),
     };
     CLIENTES = cli.clientes || [];
+    LOOMS = {items: (loomsJ && loomsJ.items) || []};
     HOJA = {ajustes: hojaJ.ajustes || {}, nuevos: hojaJ.nuevos || [], borrados: hojaJ.borrados || []};
     pintar();
   } catch (e) { $("#act").textContent = "Error: " + (e.message || e); }
@@ -617,6 +667,7 @@ function pintar() {
   grafica(DATOS.porDia || []);
   $("#calientes").innerHTML = (DATOS.calientes || []).map((l) => `<div class="item"><b>${esc(l.empresa)}</b> <span class="etiqueta">${esc(tel(l.tel))}</span><p>${esc(l.ultima)}</p></div>`).join("") || `<div class="vacio">Nadie esperando respuesta.</div>`;
   leadsCalientes();
+  looms();
   CAL_EVS = eventosCal();
   const prox = CAL_EVS.filter((e) => e.fecha >= ymd(new Date()));
   $("#llamadas-inicio").innerHTML = prox.slice(0, 4).map((e) => `<div class="item"><b>${esc(e.titulo)}</b><p>${esc(diaLargo(e.fecha))}${e.hora ? " · " + e.hora : ""}${e.prov ? " · sin confirmar" : ""}</p></div>`).join("") || `<div class="vacio">Sin llamadas agendadas.</div>`;
@@ -898,6 +949,101 @@ $("#l-cancelar").onclick = () => $("#modal-lead").hidden = true;
 $("#modal-lead").onclick = (e) => { if (e.target.id === "modal-lead") $("#modal-lead").hidden = true; };
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") $("#modal-lead").hidden = true; });
 
+// ---- Looms: vídeos para mandar según el negocio (looms.json + archivos en looms/ del almacén heynora-panel)
+let LOOMS = {items: []}, LOOM_F = "todos", LOOM_ED = null, COLA_L = Promise.resolve();
+const NEGOCIOS_BASE = ["Concesionario de coches", "Concesionario de motos", "Compraventa / ocasión", "Taller", "Gestoría", "Otro"];
+const MENSAJE_LOOM = "Hola {nombre}, te he grabado un vídeo para ti (no dura ni dos minutos). Échale un ojo con calma y dime qué te parece: {enlace}";
+const urlOk = (u) => /^https?:\/\/\S+$/i.test(u || "");
+function guardarLooms() {
+  const cuerpo = new Blob([JSON.stringify({actualizado: new Date().toISOString(), items: LOOMS.items})], {type: "application/json"});
+  COLA_L = COLA_L.then(async () => { const {error} = await ALMACEN.upload("looms.json", cuerpo, {upsert: true, cacheControl: "0", contentType: "application/json"}); if (error) throw new Error(error.message); });
+  return COLA_L;
+}
+async function copiar(texto, b) {
+  try { await navigator.clipboard.writeText(texto); } catch (e) { prompt("Copia con Cmd+C:", texto); return; }
+  if (b) { const o = b.textContent; b.textContent = "✓ Copiado"; setTimeout(() => b.textContent = o, 1400); }
+}
+function looms() {
+  const items = LOOMS.items || [], q = ($("#loom-buscar").value || "").toLowerCase().trim();
+  const negocios = [...new Set(items.map((i) => i.negocio).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+  if (LOOM_F !== "todos" && !negocios.includes(LOOM_F)) LOOM_F = "todos";
+  $("#loom-filtros").innerHTML = ["todos", ...negocios].map((n) => {
+    const c = n === "todos" ? items.length : items.filter((i) => i.negocio === n).length;
+    return `<button role="tab" class="${n === LOOM_F ? "activo" : ""}" data-n="${esc(n)}">${n === "todos" ? "TODOS" : esc(n.toUpperCase())}<small>${c}</small></button>`;
+  }).join("");
+  document.querySelectorAll("#loom-filtros button").forEach((b) => b.onclick = () => { LOOM_F = b.dataset.n; looms(); });
+  const ver = items.filter((i) => (LOOM_F === "todos" || i.negocio === LOOM_F) && (!q || [i.titulo, i.negocio, i.tipo, i.notas].join(" ").toLowerCase().includes(q)))
+    .sort((a, b) => String(b.creado || "").localeCompare(String(a.creado || "")));
+  $("#looms-lista").innerHTML = ver.map((i) => `<article class="loom" data-id="${esc(i.id)}"><div class="chips"><span class="etiqueta">${esc(i.negocio || "")}</span><span class="etiqueta">${esc(i.tipo || "")}</span></div><h3>${esc(i.titulo)}</h3>` +
+    (i.notas ? `<p class="notas">${esc(i.notas)}</p>` : `<p class="notas"></p>`) +
+    `<div class="cl-acc"><button class="boton" data-a="ver">▶ Ver</button>` +
+    (urlOk(i.url) ? `<button class="boton" data-a="enlace">📋 Enlace</button><button class="boton" data-a="mensaje">💬 Copiar mensaje</button>` : "") +
+    (i.archivo ? `<button class="boton" data-a="bajar">⬇ Descargar</button>` : "") +
+    `<button class="boton" data-a="editar">✎</button><button class="boton" data-a="borrar">🗑</button></div></article>`).join("") ||
+    `<div class="looms-vacio">${items.length ? "Ningún loom con ese filtro." : "Aún no hay looms. Pulsa <b>＋ Subir loom</b> y añade el primero: pega el enlace de Loom o sube el vídeo, y dile para qué tipo de negocio es.<br>Ideas: una <b>demo</b> para concesionarios de coches, otra para motos, y un <b>caso de éxito</b> (Motovatio) para cada sector."}</div>`;
+}
+$("#loom-buscar").oninput = () => looms();
+function abrirLoom(id) {
+  LOOM_ED = id; const i = id ? LOOMS.items.find((x) => x.id === id) : null;
+  $("#lm-titulo").textContent = i ? "Editar loom" : "Subir loom"; $("#e-loom").textContent = "";
+  $("#lm-negocios").innerHTML = [...new Set([...NEGOCIOS_BASE, ...LOOMS.items.map((x) => x.negocio).filter(Boolean)])].map((n) => `<option value="${esc(n)}">`).join("");
+  $("#lm-nombre").value = i ? i.titulo : ""; $("#lm-negocio").value = i ? i.negocio : (LOOM_F !== "todos" ? LOOM_F : "");
+  $("#lm-tipo").value = i ? (i.tipo || "Demo") : "Demo"; $("#lm-url").value = i ? (i.url || "") : ""; $("#lm-archivo").value = "";
+  $("#lm-archivo-actual").textContent = i && i.archivo ? "Vídeo subido: " + i.archivoNombre + " (si eliges otro, lo sustituye)" : "";
+  $("#lm-notas").value = i ? (i.notas || "") : ""; $("#lm-mensaje").value = i && i.mensaje ? i.mensaje : MENSAJE_LOOM;
+  $("#modal-loom").hidden = false; $("#lm-nombre").focus();
+}
+$("#loom-nuevo").onclick = () => abrirLoom(null);
+$("#f-loom").onsubmit = async (e) => {
+  e.preventDefault(); const err = $("#e-loom"), bt = $("#lm-guardar"); err.textContent = "";
+  const prev = LOOM_ED ? LOOMS.items.find((x) => x.id === LOOM_ED) : null, url = $("#lm-url").value.trim(), file = $("#lm-archivo").files[0];
+  if (url && !urlOk(url)) { err.textContent = "El enlace tiene que empezar por https://"; return; }
+  if (!url && !file && !(prev && prev.archivo)) { err.textContent = "Pega el enlace del Loom o sube el vídeo."; return; }
+  bt.disabled = true; bt.textContent = file ? "Subiendo…" : "Guardando…";
+  try {
+    const id = prev ? prev.id : Date.now().toString(36), item = {...(prev || {}), id, creado: prev ? prev.creado : new Date().toISOString(),
+      titulo: $("#lm-nombre").value.trim(), negocio: $("#lm-negocio").value.trim(), tipo: $("#lm-tipo").value, url, notas: $("#lm-notas").value.trim(), mensaje: $("#lm-mensaje").value.trim()};
+    if (file) {
+      const ruta = `looms/${id}-${file.name.replace(/[^\w.\-]+/g, "_")}`;
+      const {error} = await ALMACEN.upload(ruta, file, {upsert: true, contentType: file.type || "video/mp4"});
+      if (error) throw new Error(/size|large|413|exceed/i.test(error.message || "") ? `El vídeo pesa ${(file.size / 1048576).toFixed(0)} MB y el almacén no lo admite. Súbelo a Loom y pega el enlace, o comprímelo.` : "No se pudo subir el vídeo: " + error.message);
+      if (prev && prev.archivo && prev.archivo !== ruta) await ALMACEN.remove([prev.archivo]);
+      item.archivo = ruta; item.archivoNombre = file.name;
+    }
+    LOOMS = {items: prev ? LOOMS.items.map((x) => x.id === id ? item : x) : [item, ...LOOMS.items]};
+    await guardarLooms(); $("#modal-loom").hidden = true; looms();
+  } catch (ex) { err.textContent = ex.message; }
+  bt.disabled = false; bt.textContent = "Guardar";
+};
+$("#lm-cancelar").onclick = () => $("#modal-loom").hidden = true;
+$("#modal-loom").onclick = (e) => { if (e.target.id === "modal-loom") $("#modal-loom").hidden = true; };
+$("#mv-cerrar").onclick = () => { $("#mv-video").pause(); $("#modal-video").hidden = true; };
+$("#looms-lista").addEventListener("click", async (e) => {
+  const b = e.target.closest("button[data-a]"); if (!b) return;
+  const id = b.closest(".loom").dataset.id, i = LOOMS.items.find((x) => x.id === id); if (!i) return;
+  if (b.dataset.a === "editar") return abrirLoom(id);
+  if (b.dataset.a === "enlace") return copiar(i.url, b);
+  if (b.dataset.a === "mensaje") {
+    let m = i.mensaje || MENSAJE_LOOM;
+    if (/\{nombre\}/.test(m)) { const n = prompt("¿Cómo se llama? (para el saludo; déjalo vacío si no lo sabes)"); if (n === null) return; m = m.replace(/ ?\{nombre\}/, n.trim() ? " " + n.trim() : ""); }
+    return copiar(m.replace(/\{enlace\}/g, i.url), b);
+  }
+  if (b.dataset.a === "ver") {
+    if (urlOk(i.url)) return void window.open(i.url, "_blank", "noopener");
+    const {data, error} = await ALMACEN.createSignedUrl(i.archivo, 3600); if (error) return alert("No se pudo abrir el vídeo: " + error.message);
+    $("#mv-titulo").textContent = i.titulo; $("#mv-video").src = data.signedUrl; $("#modal-video").hidden = false; return;
+  }
+  if (b.dataset.a === "bajar") {
+    const {data, error} = await ALMACEN.createSignedUrl(i.archivo, 3600, {download: i.archivoNombre || true}); if (error) return alert("No se pudo descargar: " + error.message);
+    const a = document.createElement("a"); a.href = data.signedUrl; a.click(); return;
+  }
+  if (b.dataset.a === "borrar") {
+    if (!confirm(`¿Borrar el loom «${i.titulo}»?\n\n${i.archivo ? "Se borra también el vídeo subido. " : ""}El enlace de Loom, si lo hay, sigue existiendo en Loom.`)) return;
+    try { if (i.archivo) await ALMACEN.remove([i.archivo]); LOOMS = {items: LOOMS.items.filter((x) => x.id !== id)}; await guardarLooms(); looms(); }
+    catch (ex) { alert("No se pudo borrar: " + ex.message); }
+  }
+});
+
 // ---- Leads calientes: 🔥 por contestar y 🟡 pendientes de su respuesta (se marcan en el CRM: leads.notas, primera línea)
 const waLink = (t) => { const d = String(t || "").replace(/\D/g, ""); return d ? "https://wa.me/" + (d.length === 9 ? "34" + d : d) : ""; };
 const cuantoHace = (iso) => { const m = (Date.now() - new Date(iso)) / 60000; return m < 60 ? Math.max(1, Math.round(m)) + " min" : m < 1440 ? Math.round(m / 60) + " h" : Math.round(m / 1440) + " d"; };
@@ -1005,7 +1151,7 @@ function calendario() {
 }
 
 // ---- Menú: cada sección es una vista (#inicio, #hoja, #clientes, #llamadas, #funciona)
-const TITULOS = {inicio: "Inicio", calientes: "Leads calientes", hoja: "Hoja de seguimiento", clientes: "Clientes", llamadas: "Llamadas", funciona: "Qué funciona"};
+const TITULOS = {inicio: "Inicio", calientes: "Leads calientes", hoja: "Hoja de seguimiento", clientes: "Clientes", llamadas: "Llamadas", looms: "Looms", funciona: "Qué funciona"};
 function ir() {
   const v = (location.hash || "#inicio").slice(1);
   const vista = TITULOS[v] ? v : "inicio";
