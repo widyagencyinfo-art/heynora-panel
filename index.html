@@ -685,7 +685,11 @@ const nivel = (r) => esPorContestar(r) ? 0 : r.llamada_agendada ? 1 : esInteres(
 function porPrioridad(a, b) {
   const na = nivel(a), nb = nivel(b); if (na !== nb) return na - nb;
   const ra = a.fecha_respuesta || a.fecha_inicial || "", rb = b.fecha_respuesta || b.fecha_inicial || "";
-  return na === 0 ? ra.localeCompare(rb) : rb.localeCompare(ra);
+  if (na === 0) {   // entre los 🔥: primero el que propone día u hora (caduca antes), luego el que pide llamada, luego el resto
+    const u = (r) => /lunes|martes|mi[eé]rcoles|jueves|viernes|hoy|mañana|\d{1,2}[:.]\d{2}/i.test(r.texto_respuesta || "") ? 0 : /llama/i.test(r.texto_respuesta || "") ? 1 : 2;
+    return (u(a) - u(b)) || ra.localeCompare(rb);
+  }
+  return rb.localeCompare(ra);
 }
 function hoja() {
   const filas = todasFilas();
