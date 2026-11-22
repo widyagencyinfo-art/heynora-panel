@@ -217,6 +217,22 @@ td.c-am.lead{background:#272a37}
 .cl p{margin:6px 0 10px;white-space:pre-wrap;font-size:13.5px;color:var(--suave);line-height:1.45}
 .cl-acc{display:flex;gap:8px;flex-wrap:wrap} .cl-acc .boton{padding:7px 12px;font-size:13px;text-decoration:none;display:inline-block}
 .caja+.caja{margin-top:18px}
+.metricas{margin:18px 0}
+.m-cab{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.m-cab h2{margin:0}
+.m-per{margin-left:auto;display:flex;gap:4px}
+.m-per button{font:600 12px Instrument,sans-serif;color:var(--suave);background:transparent;border:1px solid var(--borde);border-radius:99px;padding:6px 13px;cursor:pointer}
+.m-per button.activo{color:#fff;background:rgba(255,106,43,.25);border-color:rgba(255,106,43,.55)}
+.m-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-bottom:18px}
+.m-t{padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08)}
+.m-t .n{font-size:12px;color:var(--suave)} .m-t .v{font:700 26px Instrument,sans-serif;margin:3px 0 2px} .m-t .s{font-size:11.5px;color:var(--tenue);line-height:1.35}
+.m-dos{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.m-dos h3{font:600 14px Instrument,sans-serif;margin-bottom:4px} .m-dos .nota{font-size:12px;color:var(--tenue);margin-bottom:10px;line-height:1.4}
+.emb{display:grid;grid-template-columns:128px 1fr 96px;gap:10px;align-items:center;margin:7px 0;font-size:13px}
+.emb .bm{height:14px;border-radius:8px;background:rgba(255,255,255,.08);overflow:hidden} .emb .bm i{display:block;height:100%;border-radius:8px;background:var(--naranja)}
+.emb .bm i.gris{background:var(--gris)} .emb .c{text-align:right;color:var(--suave);font-variant-numeric:tabular-nums}
+@media (max-width:1000px){.m-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.m-dos{grid-template-columns:1fr}}
+@media (max-width:560px){.m-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.emb{grid-template-columns:100px 1fr 80px}}
 @media (max-width:1000px){.kpis{grid-template-columns:repeat(2,1fr)}.rejilla,.tres,.dos-iguales{grid-template-columns:1fr}}
 @media (max-width:860px){
   .app{grid-template-columns:1fr}
@@ -263,6 +279,7 @@ td.c-am.lead{background:#272a37}
     <!-- INICIO -->
     <section class="vista" data-vista="inicio">
       <div class="kpis" id="kpis"></div>
+      <div class="vidrio caja metricas" id="metricas"></div>
       <div class="rejilla">
         <div class="vidrio caja">
           <h2>Últimos 14 días <small>mensajes del 642 y respuestas reales</small></h2>
@@ -557,6 +574,37 @@ async function cargar() {
 
 function kpi(t, v, s, extra = "") { return `<div class="vidrio kpi flota ${extra}"><div class="t">${t}</div><div class="v">${v}</div><div class="s">${s}</div></div>`; }
 
+// ---- Métricas del tracker del curso «WhatsApp 101»: enviados → respuestas → interesados → booked, en qué toque contestan, tiempo en contestar
+let PER = "total";
+function metricas() {
+  const todas = DATOS.filas || [], d7 = hace(7);
+  const fs = PER === "7" ? todas.filter((r) => (r.fecha_inicial || "").slice(0, 10) >= d7) : todas;
+  const n = fs.length, reales = fs.filter((r) => REALES.has(r.tipo_respuesta)), utiles = fs.filter((r) => UTILES.has(r.tipo_respuesta));
+  const no = fs.filter((r) => r.tipo_respuesta === "no" || (r.descarte && /no interesa|cerrado/i.test(r.descarte))).length, booked = fs.filter((r) => r.llamada_agendada).length;
+  const pc = (a, b) => b ? (Math.round(1000 * a / b) / 10).toString().replace(".", ",") + " %" : "–";
+  const ms = (s) => new Date(String(s).replace(" ", "T")).getTime();
+  const tt = reales.filter((r) => r.fecha_respuesta && r.fecha_inicial).map((r) => (ms(r.fecha_respuesta) - ms(r.fecha_inicial)) / 3600000).filter((h) => h >= 0).sort((a, b) => a - b);
+  const med = tt.length ? tt[Math.floor(tt.length / 2)] : null, medTxt = med === null ? "–" : med < 1 ? Math.max(1, Math.round(med * 60)) + " min" : med < 48 ? Math.round(med) + " h" : Math.round(med / 24) + " d";
+  const tile = (nom, v, s) => `<div class="m-t"><div class="n">${nom}</div><div class="v">${v}</div><div class="s">${s}</div></div>`;
+  const fila = (nom, v, tot, extra, gris) => `<div class="emb"><span>${nom}</span><div class="bm"><i class="${gris ? "gris" : ""}" style="width:${tot ? Math.max(v ? 2 : 0, Math.round(100 * v / tot)) : 0}%"></i></div><span class="c">${num(v)} · ${extra}</span></div>`;
+  const toq = ["inicial", "F1", "F2", "F3"], porToque = toq.map((k) => reales.filter((r) => r.contesto_en === k).length), totalT = porToque.reduce((a, b) => a + b, 0);
+  const fup = [1, 2, 3].map((i) => fs.filter((r) => r["fup" + i]).length);
+  $("#metricas").innerHTML = `<div class="m-cab"><h2>📊 Métricas del tracker <small>las del curso de prospección por WhatsApp</small></h2><div class="m-per">` +
+    [["7", "Últimos 7 días"], ["total", "Total"]].map(([k, e]) => `<button data-p="${k}" class="${PER === k ? "activo" : ""}">${e}</button>`).join("") + `</div></div>` +
+    `<div class="m-grid">` + tile("Enviados (mensaje inicial)", num(n), PER === "7" ? "escritos en los últimos 7 días" : "desde que empezó el 642") +
+      tile("Tasa de respuesta", pc(reales.length, n), `${num(reales.length)} han contestado de verdad`) +
+      tile("Interesados", num(utiles.length), `${pc(utiles.length, n)} de los enviados`) +
+      tile("BOOKED · llamada", num(booked), `${pc(booked, n)} de los enviados`) +
+      tile("NOT INTERESTED", num(no), `${pc(no, n)} de los enviados`) +
+      tile("Tiempo en contestar", medTxt, "mediana desde el mensaje inicial") + `</div>` +
+    `<div class="m-dos"><div><h3>Embudo</h3><div class="nota">Cada paso, sobre el anterior entre paréntesis.</div>` +
+      fila("Enviados", n, n, "100 %") + fila("Contestaron", reales.length, n, pc(reales.length, n)) +
+      fila("Interesados", utiles.length, n, pc(utiles.length, reales.length) + " de resp.") + fila("Booked", booked, n, pc(booked, utiles.length || reales.length) + " de " + (utiles.length ? "int." : "resp.")) +
+    `</div><div><h3>En qué toque contestan</h3><div class="nota">«La mayoría de ventas se dan gracias a los seguimientos, a la repetición de mensajes.» Seguimientos mandados: F Up 1 ${fup[0]} · F Up 2 ${fup[1]} · F Up 3 ${fup[2]}.</div>` +
+      toq.map((k, i) => fila(["Mensaje inicial", "F Up 1", "F Up 2", "F Up 3"][i], porToque[i], totalT || 1, pc(porToque[i], totalT), i > 0)).join("") + `</div></div>`;
+  document.querySelectorAll("#metricas .m-per button").forEach((b) => b.onclick = () => { PER = b.dataset.p; metricas(); });
+}
+
 function pintar() {
   const s = DATOS.semana, t = DATOS.total;
   $("#act").textContent = DATOS.actualizadoTracker ? "Tracker: " + fecha(DATOS.actualizadoTracker) : "Sin tracker";
@@ -565,8 +613,9 @@ function pintar() {
     kpi("Respuestas reales · 7 días", num(s.reales), `${s.pct}% · en total ${num(t.reales)} (${t.pct}%)`, "naranja") +
     kpi("Automáticas · 7 días", num(s.automaticas), "no cuentan como respuesta") +
     kpi("Llamadas agendadas", num(t.llamadas), `${t.enviados ? (100 * t.llamadas / t.enviados).toFixed(1) : 0} por cada 100 enviados`);
+  metricas();
   grafica(DATOS.porDia || []);
-  $("#calientes").innerHTML = (DATOS.calientes || []).map((l) => `<div class="item"><b>${esc(l.empresa)}</b> <span class="etiqueta">${esc(l.tel || "")}</span><p>${esc(l.ultima)}</p></div>`).join("") || `<div class="vacio">Nadie esperando respuesta.</div>`;
+  $("#calientes").innerHTML = (DATOS.calientes || []).map((l) => `<div class="item"><b>${esc(l.empresa)}</b> <span class="etiqueta">${esc(tel(l.tel))}</span><p>${esc(l.ultima)}</p></div>`).join("") || `<div class="vacio">Nadie esperando respuesta.</div>`;
   leadsCalientes();
   CAL_EVS = eventosCal();
   const prox = CAL_EVS.filter((e) => e.fecha >= ymd(new Date()));
