@@ -513,6 +513,8 @@ async function cargar() {
     if (leads.error) throw leads.error;
     const filas = tracker.filas || [], ls = leads.data || [], ids = new Set(ls.map((l) => l.id));
     const arriba = (l) => (l.notas || "").trim().split("\n")[0];
+    // entrada completa de arriba: hasta la siguiente línea que empieza con sello «D/M HH:MM ·» (los mensajes largos ocupan varias líneas)
+    const entrada = (l) => (l.notas || "").trim().split(/\n(?=\d{1,2}\/\d{1,2} \d{1,2}:\d{2} · )/)[0];
     const abiertas = ["lead", "contactado", "llamada_agendada", "propuesta"];
     const ult = (n) => filas.filter((r) => (r.fecha_inicial || "") >= hace(n));
     const porDia = {};
@@ -526,9 +528,9 @@ async function cargar() {
       porPlantilla: agrupar(filas, "plantilla"), porVariante: agrupar(filas, "variante"), porCumplido: agrupar(filas, "tipo_cumplido"),
       porDia: Object.values(porDia).sort((a, b) => a.dia.localeCompare(b.dia)),
       calientes: ls.filter((l) => abiertas.includes(l.stage) && arriba(l).includes("🔥"))
-        .map((l) => ({id: l.id, empresa: l.company_name, tel: l.contact_phone, ultima: arriba(l).slice(0, 260), cuando: l.updated_at})),
+        .map((l) => ({id: l.id, empresa: l.company_name, tel: l.contact_phone, ultima: entrada(l).slice(0, 420), cuando: l.updated_at})),
       pendientes: ls.filter((l) => abiertas.includes(l.stage) && arriba(l).includes("🟡"))
-        .map((l) => ({id: l.id, empresa: l.company_name, tel: l.contact_phone, ultima: arriba(l).slice(0, 320), cuando: l.next_followup_at})),
+        .map((l) => ({id: l.id, empresa: l.company_name, tel: l.contact_phone, ultima: entrada(l).slice(0, 420), cuando: l.next_followup_at})),
       llamadas: ls.filter((l) => l.stage === "llamada_agendada")
         .map((l) => ({id: l.id, empresa: l.company_name, cuando: l.next_followup_at, ultima: arriba(l).slice(0, 160)})),
       reuniones: (reus.data || []).filter((m) => (m.lead_id && ids.has(m.lead_id)) || (!m.lead_id && /conce|motor|auto|coche|moto|nora/i.test(m.titulo || ""))),
@@ -850,7 +852,8 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape") $("#modal-
 // ---- Leads calientes: 🔥 por contestar y 🟡 pendientes de su respuesta (se marcan en el CRM: leads.notas, primera línea)
 const waLink = (t) => { const d = String(t || "").replace(/\D/g, ""); return d ? "https://wa.me/" + (d.length === 9 ? "34" + d : d) : ""; };
 const cuantoHace = (iso) => { const m = (Date.now() - new Date(iso)) / 60000; return m < 60 ? Math.max(1, Math.round(m)) + " min" : m < 1440 ? Math.round(m / 60) + " h" : Math.round(m / 1440) + " d"; };
-const urgTexto = (s) => /lunes|martes|mi[eé]rcoles|jueves|viernes|hoy|mañana|\d{1,2}[:.]\d{2}/i.test(s || "") ? 0 : /llama/i.test(s || "") ? 1 : 2;
+const urgTexto = (s) => { s = String(s || "").replace(/^\d{1,2}\/\d{1,2} \d{1,2}:\d{2} · /, "");
+  return /lunes|martes|mi[eé]rcoles|jueves|viernes|hoy|mañana|\d{1,2}[:.]\d{2}/i.test(s) ? 0 : /llama/i.test(s) ? 1 : 2; };
 function leadsCalientes() {
   const cs = [...(DATOS.calientes || [])].sort((a, b) => (urgTexto(a.ultima) - urgTexto(b.ultima)) || String(a.cuando).localeCompare(String(b.cuando)));
   const hoyD = new Date(ymd(new Date()) + "T12:00:00");
