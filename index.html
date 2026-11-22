@@ -954,6 +954,8 @@ let LOOMS = {items: []}, LOOM_F = "todos", LOOM_ED = null, COLA_L = Promise.reso
 const NEGOCIOS_BASE = ["Concesionario de coches", "Concesionario de motos", "Compraventa / ocasión", "Taller", "Gestoría", "Otro"];
 const MENSAJE_LOOM = "Hola {nombre}, te he grabado un vídeo para ti (no dura ni dos minutos). Échale un ojo con calma y dime qué te parece: {enlace}";
 const urlOk = (u) => /^https?:\/\/\S+$/i.test(u || "");
+// El panel puede escribir en el almacén pero no borrar: se vacía el archivo (libera el espacio) y se intenta quitarlo.
+async function quitarArchivo(ruta) { try { await ALMACEN.upload(ruta, new Blob([]), {upsert: true}); } catch (e) {} try { await ALMACEN.remove([ruta]); } catch (e) {} }
 function guardarLooms() {
   const cuerpo = new Blob([JSON.stringify({actualizado: new Date().toISOString(), items: LOOMS.items})], {type: "application/json"});
   COLA_L = COLA_L.then(async () => { const {error} = await ALMACEN.upload("looms.json", cuerpo, {upsert: true, cacheControl: "0", contentType: "application/json"}); if (error) throw new Error(error.message); });
@@ -1007,7 +1009,7 @@ $("#f-loom").onsubmit = async (e) => {
       const ruta = `looms/${id}-${file.name.replace(/[^\w.\-]+/g, "_")}`;
       const {error} = await ALMACEN.upload(ruta, file, {upsert: true, contentType: file.type || "video/mp4"});
       if (error) throw new Error(/size|large|413|exceed/i.test(error.message || "") ? `El vídeo pesa ${(file.size / 1048576).toFixed(0)} MB y el almacén no lo admite. Súbelo a Loom y pega el enlace, o comprímelo.` : "No se pudo subir el vídeo: " + error.message);
-      if (prev && prev.archivo && prev.archivo !== ruta) await ALMACEN.remove([prev.archivo]);
+      if (prev && prev.archivo && prev.archivo !== ruta) await quitarArchivo(prev.archivo);
       item.archivo = ruta; item.archivoNombre = file.name;
     }
     LOOMS = {items: prev ? LOOMS.items.map((x) => x.id === id ? item : x) : [item, ...LOOMS.items]};
@@ -1039,7 +1041,7 @@ $("#looms-lista").addEventListener("click", async (e) => {
   }
   if (b.dataset.a === "borrar") {
     if (!confirm(`¿Borrar el loom «${i.titulo}»?\n\n${i.archivo ? "Se borra también el vídeo subido. " : ""}El enlace de Loom, si lo hay, sigue existiendo en Loom.`)) return;
-    try { if (i.archivo) await ALMACEN.remove([i.archivo]); LOOMS = {items: LOOMS.items.filter((x) => x.id !== id)}; await guardarLooms(); looms(); }
+    try { if (i.archivo) await quitarArchivo(i.archivo); LOOMS = {items: LOOMS.items.filter((x) => x.id !== id)}; await guardarLooms(); looms(); }
     catch (ex) { alert("No se pudo borrar: " + ex.message); }
   }
 });
